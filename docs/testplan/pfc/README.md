@@ -10,6 +10,11 @@
 | `PFC_PAUSE_LOSSLESS_README.md` | ✅ | PFC 无丢包（Lossless）测试 |
 | `PFC_PAUSE_LOSSY_README.md` | ✅ | PFC 有丢包（Lossy）测试 |
 | `PFC_PAUSE_RESPONSE_HEADROOM_README.md` | ✅ | PFC 响应和 Headroom 测试 |
+| `PFC_ASYMMETRIC_TEST_PLAN.md` | ✅ 新增 | PFC 对称/非对称测试计划 |
+| `RoCE_v2_TEST_PLAN.md` | ✅ 新增 | RoCE v2 相关测试计划 |
+
+### PFC WD (Watchdog) 测试计划
+- 见 `../pfcwd/README.md`（包含基础测试和 2 发送者 2 接收者场景）
 
 ## 测试范围
 
@@ -66,9 +71,24 @@ tests/pfcwd/
 
 ## 待办事项
 
-- [ ] 补充 PFC WD (Watchdog) 测试计划
-- [ ] 添加 PFC 对称/非对称测试文档
-- [ ] 完善 RoCE v2 相关测试计划
+- [x] 补充 PFC WD (Watchdog) 测试计划 - ✅ 已完成（见 `../pfcwd/README.md`）
+- [x] 添加 PFC 对称/非对称测试文档 - ✅ 已完成（见 `PFC_ASYMMETRIC_TEST_PLAN.md`）
+- [x] 完善 RoCE v2 相关测试计划 - ✅ 已完成（见 `RoCE_v2_TEST_PLAN.md`）
+
+## 新增测试计划详情
+
+### PFC_ASYMMETRIC_TEST_PLAN.md
+- PFC 对称（Symmetric）模式测试
+- PFC 非对称（Asymmetric）模式测试
+- TX/RX 方向独立配置测试
+- 与 RoCE v2 结合测试
+
+### RoCE_v2_TEST_PLAN.md
+- RoCE v2 基础功能测试
+- RoCE v2 性能测试（延迟、吞吐量）
+- RoCE v2 高可用性测试
+- RoCE v2 与 ECN/PFC 共存测试
+- RoCE v2 多租户测试
 
 ## 状态说明
 

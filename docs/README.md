@@ -6,7 +6,9 @@ Ansible is the main tool powering all the tasks for SONiC testing. The tasks inc
 * Deploy and setup testbed
 * Interact with various devices in testbed in ansible playbooks and in pytest scripts.
 
-Originally, all the tests were written in ansible playbooks. In 2019, pytest was first introduced to replace the ansible playbook based tests. Since then, new tests were all written using pytest. Existing ansible-playbook tests were also converted to pytest gradually. At the time of writing (2020 Nov.), only pytest based new tests are accepted.
+Originally, all the tests were written in ansible playbooks. In 2019, pytest was first introduced to replace the ansible playbook based tests. Since then, new tests were all written using pytest. Existing ansible-playbook tests were also converted to pytest gradually. Currently, pytest based new tests are accepted.
+
+In addition to pytest, the **SPyTest** framework (located in `spytest/` directory) provides an alternative automation framework with traffic generation capabilities (Ixia, Spirent, Scapy).
 
 Using of pytest does not mean that ansible will no long be used. Ansible is still the core tool power SONiC testing. A new pytest plugin named pytest-ansible was introduced to bridge the power between pytest and ansible. Under the hood, all the pytest based test scripts are still using ansible to interact with various devices in testbed. Ansible playbooks are still used for testbed deployment and configuration. All the customized ansible modules are re-used by the pytest scripts as well.
 
@@ -21,12 +23,12 @@ Using of pytest does not mean that ansible will no long be used. Ansible is stil
 
 # Documentations
 
-* [Ansible](ansible/README.md)
 * [Testbed](testbed/README.md)
-* [Write and run pytest](tests/README.md)
+* [Write and run pytest](tests/README.md) - **[TODO: Create tests/README.md]**
 * [Testplan](testplan)
-* [Test Reporting](/test_reporting/README.md)
+* [Test Reporting](test_reporting/README.md)
 * [api_wiki](api_wiki/README.md)
-* [Spytest](/spytest)
-  * [Introduction](/spytest/Doc/intro.md)
-  * [Install](/spytest/Doc/install.md)
+* [Spytest](spytest/)
+  * [Introduction](spytest/Doc/intro.md)
+  * [Install](spytest/Doc/install.md)
+* [Ansible](https://github.com/sonic-net/sonic-mgmt/tree/master/ansible) - **[TODO: Create ansible/README.md]**

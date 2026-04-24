@@ -7,6 +7,34 @@
 ### Description
 Management and automation code used for SONiC testbed deployment, tests and reporting.
 
+## Project Structure
+
+| Directory | Description |
+|-----------|-------------|
+| `ansible/` | Testbed deployment and setup code, ansible playbooks and roles |
+| `docs/` | Documentation for testbed, tests, and test plans |
+| `tests/` | Pytest and pytest-ansible based test infrastructure and test scripts |
+| `spytest/` | SPyTest automation framework and tests for validating SONiC |
+| `test_reporting/` | Parsing, uploading and processing test reports (junit xml) |
+| `sdn_tests/` | SDN related tests |
+| `api_wiki/` | Information on localhost/dut/ptf communication (useful for test writing) |
+
+## Testing Frameworks
+
+### Pytest (Primary)
+- Main testing framework for SONiC
+- Uses `pytest-ansible` plugin to interact with devices via Ansible
+- Test scripts located in `tests/` directory
+
+### SPyTest
+- Alternative automation framework located in `spytest/` directory
+- Supports traffic generation with Ixia, Spirent, and Scapy
+- Documentation: [SPyTest Intro](spytest/Doc/intro.md)
+
+### Legacy Ansible Playbooks
+- Original test framework (being phased out)
+- Existing playbook tests are gradually being converted to pytest
+
 # Contribution guide
 Please read the [contributor guide](https://github.com/sonic-net/SONiC/wiki/Becoming-a-contributor) for more details on how to contribute.
 

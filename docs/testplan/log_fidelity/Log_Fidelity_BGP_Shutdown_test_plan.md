@@ -10,6 +10,7 @@
   - [Test methodology](#test-methodology)
   - [Test cases](#test-cases)
     - [Case LOGFID-BGP-001 — `config bgp shutdown all` produces admin-down syslog entry](#case-logfid-bgp-001--config-bgp-shutdown-all-produces-admin-down-syslog-entry)
+    - [Case LOGFID-BGP-002 — `config bgp startup all` produces admin-up syslog entry](#case-logfid-bgp-002--config-bgp-startup-all-produces-admin-up-syslog-entry)
   - [Test case ↔ implementation mapping](#test-case--implementation-mapping)
   - [Out of scope](#out-of-scope)
   - [Open items](#open-items)
@@ -20,6 +21,7 @@
 | Rev | Date         | Author       | Change Description                                                      |
 |:---:|:-------------|:-------------|:------------------------------------------------------------------------|
 | 0.1 | 2026-04-27   | Y. Wu        | Initial test plan derived from existing automation in `tests/log_fidelity/`. |
+| 0.2 | 2026-04-27   | Y. Wu        | Added Case LOGFID-BGP-002 covering the `config bgp startup all` admin-up direction (resolves prior Open item). |
 
 ## Scope
 
@@ -28,6 +30,7 @@ This plan covers verification that the SONiC CLI `config bgp shutdown all` comma
 In scope:
 
 - Detecting the regex `admin state is set to 'down'` in syslog after `config bgp shutdown all`.
+- Detecting the regex `admin state is set to 'up'` in syslog after `config bgp startup all` (with a precondition that BGP is administratively down).
 - Cleanup via `config bgp startup all` regardless of test outcome.
 - Suppressing known-noisy `syncd`/`SAI_API_TUNNEL` ECMP log lines via LogAnalyzer ignore list.
 
@@ -95,11 +98,28 @@ No pre-test configuration is required beyond a healthy SONiC DUT with at least o
 - **Pass criteria**: LogAnalyzer reports at least one match for `admin state is set to 'down'`; no `LogAnalyzerError` raised.
 - **Fail criteria**: Analyzer raises `LogAnalyzerError` (regex not found) or the trigger command itself fails to execute.
 
+### Case LOGFID-BGP-002 — `config bgp startup all` produces admin-up syslog entry
+
+- **Test Objective**: Confirm the symmetric counterpart of LOGFID-BGP-001 — that issuing `config bgp startup all` causes at least one syslog line containing `admin state is set to 'up'` to be emitted within the analyzer's marker window.
+- **Test Configuration**:
+  - DUT in any standard topology with one or more BGP neighbors configured by minigraph.
+  - Pre-condition step (outside the marker window) issues `config bgp shutdown all` so that the subsequent startup transition produces a fresh log entry. Without this precondition, sessions are already up and `startup all` may be a no-op for log purposes.
+  - LogAnalyzer initialized with marker prefix `bgp_startup`.
+- **Test Steps**:
+  1. Issue `config bgp shutdown all` (precondition; outside marker scope).
+  2. Start LogAnalyzer marker.
+  3. Run `config bgp startup all` on the selected DUT.
+  4. Run LogAnalyzer `analyze(marker)` — must observe the regex `admin state is set to 'up'`.
+  5. Defensive: in the outer `finally`, re-issue `config bgp startup all` so a precondition failure can never leave the DUT with BGP administratively down.
+- **Pass criteria**: LogAnalyzer reports at least one match for `admin state is set to 'up'`; no `LogAnalyzerError` raised; DUT ends in BGP-up state.
+- **Fail criteria**: Analyzer raises `LogAnalyzerError` (regex not found), or any of the trigger / restore commands fail to execute.
+
 ## Test case ↔ implementation mapping
 
 | Plan ID         | Pytest function                              | File                                       |
 |-----------------|----------------------------------------------|--------------------------------------------|
 | LOGFID-BGP-001  | `test_bgp_shutdown`                          | `tests/log_fidelity/test_bgp_shutdown.py`  |
+| LOGFID-BGP-002  | `test_bgp_startup`                           | `tests/log_fidelity/test_bgp_shutdown.py`  |
 
 ## Out of scope
 
@@ -111,7 +131,7 @@ No pre-test configuration is required beyond a healthy SONiC DUT with at least o
 ## Open items
 
 - [ ] *Open item — log producer*: the test does not assert which daemon emits the line. If the FRR/bgpcfgd implementation changes the message format, this test will silently start failing. A deeper plan should fix the producer contract (e.g., assert facility/severity).
-- [ ] Add a positive/negative variant for `config bgp startup all` (regex `admin state is set to 'up'`) — currently only the down direction is asserted.
+- [x] ~~Add a positive/negative variant for `config bgp startup all` (regex `admin state is set to 'up'`) — currently only the down direction is asserted.~~ — Resolved in Rev 0.2 (Case LOGFID-BGP-002 / `test_bgp_startup`).
 - [ ] Consider exercising on multi-ASIC frontends to verify per-namespace logs are merged into the host syslog.
 
 ## References

@@ -53,3 +53,30 @@ def test_bgp_shutdown(duthosts, enum_rand_one_per_hwsku_frontend_hostname):
     BGP_UP_COMMAND = "config bgp startup all"
 
     check_syslog(duthost, "bgp_shutdown", BGP_DOWN_COMMAND, BGP_DOWN_EXPECTED_LOG_MESSAGE, BGP_UP_COMMAND)
+
+
+def test_bgp_startup(duthosts, enum_rand_one_per_hwsku_frontend_hostname):
+    """Symmetric counterpart to ``test_bgp_shutdown``.
+
+    Drives the DUT into the ``shutdown`` state first so that the subsequent
+    ``startup`` transition is observable, then asserts that syslog records the
+    admin-state ``up`` event for the BGP control plane. Restore step ensures
+    sessions remain administratively up regardless of test outcome.
+    """
+    duthost = duthosts[enum_rand_one_per_hwsku_frontend_hostname]
+
+    BGP_UP_EXPECTED_LOG_MESSAGE = "admin state is set to 'up'"
+    BGP_DOWN_COMMAND = "config bgp shutdown all"
+    BGP_UP_COMMAND = "config bgp startup all"
+
+    # Pre-condition: take BGP down so the up-transition produces a fresh log.
+    # Done outside the LogAnalyzer marker so it does not pollute the regex
+    # match window.
+    duthost.command(BGP_DOWN_COMMAND)
+
+    try:
+        check_syslog(duthost, "bgp_startup", BGP_UP_COMMAND, BGP_UP_EXPECTED_LOG_MESSAGE, BGP_UP_COMMAND)
+    finally:
+        # Defensive: ``check_syslog``'s own finally already issues startup, but
+        # if the pre-condition step itself raised we still want sessions back.
+        duthost.command(BGP_UP_COMMAND)

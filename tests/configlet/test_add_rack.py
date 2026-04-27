@@ -61,10 +61,12 @@ def configure_dut(duthosts, rand_one_dut_hostname):
 
 
 @pytest.mark.disable_loganalyzer
-def test_add_rack(configure_dut, tbinfo, duthosts, rand_one_dut_hostname):
+def test_add_rack(configure_dut, tbinfo, duthosts, rand_one_dut_hostname, request):
     global data_dir, orig_db_dir, clet_db_dir, files_dir
 
     duthost = duthosts[rand_one_dut_hostname]
 
     log_info("sys.version={}".format(sys.version))
-    do_test_add_rack(duthost, is_storage_backend='backend' in tbinfo['topo']['name'], skip_clet_test=True)
+    skip_clet_test = not request.config.getoption("--enable_clet_test")
+    do_test_add_rack(duthost, is_storage_backend='backend' in tbinfo['topo']['name'],
+                     skip_clet_test=skip_clet_test)

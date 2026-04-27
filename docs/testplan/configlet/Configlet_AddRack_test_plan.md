@@ -32,7 +32,7 @@ In scope:
 - DB dump comparison (`db_comp`) against the original CONFIG_DB.
 - BGP session health check against the added T0's IPv4 and IPv6 addresses.
 
-Out of scope: traffic-plane validation, dataplane convergence timing, partial configlet failure injection. The current test source skips the configlet-only path (`skip_clet_test=True`) and exercises only the generic-patch path end-to-end; this is captured as an Open item.
+Out of scope: traffic-plane validation, dataplane convergence timing, partial configlet failure injection. By default the configlet-only path (`apply_clet`) is skipped and only the generic-patch path is exercised end-to-end; pass `--enable_clet_test` to opt in.
 
 ## Definitions / Abbreviations
 
@@ -89,7 +89,7 @@ The same util can run *in-switch* (driven by `mock_for_switch.py`) or remotely v
 
 ## Test methodology
 
-`do_test_add_rack(duthost, is_storage_backend=..., skip_clet_test=True)` orchestrates:
+`do_test_add_rack(duthost, is_storage_backend=..., skip_clet_test=<bool>)` orchestrates:
 
 1. `init()` and full directory layout creation.
 2. Load original minigraph; wait until critical services up.
@@ -97,7 +97,7 @@ The same util can run *in-switch* (driven by `mock_for_switch.py`) or remotely v
 4. `download_sonic_files` to obtain baseline minigraph and config.
 5. Build the configlet via `files_create.do_run` (template-driven; OneNote-published format).
 6. Health-check baseline BGP session for the T0 to be removed.
-7. **Configlet path** (currently skipped — `skip_clet_test=True`):
+7. **Configlet path** (skipped unless `--enable_clet_test` is set):
    - Load minigraph **without the target T0**.
    - `take_DB_dumps` → `no_t0_db_dir`.
    - `apply_clet`: delete Everflow tables → port admin-down → apply configlet JSON list → re-add Everflow → port admin-up. Wait for critical services.
@@ -118,7 +118,7 @@ Storage-backend variants (`is_storage_backend = 'backend' in tbinfo['topo']['nam
 - **Test Configuration**:
   - T1 topology, single random DUT (`rand_one_dut_hostname`).
   - SONiC image ≥ 202205.
-  - `skip_clet_test=True` is currently passed in `test_add_rack.py` — only the generic-patch path is executed end-to-end.
+  - `skip_clet_test` defaults to `True`; set `--enable_clet_test` on the pytest command line to exercise the configlet (`apply_clet`) path.
 - **Test Steps**: see [Test methodology](#test-methodology).
 - **Pass criteria**:
   - `db_comp` reports zero non-transient diffs against `orig_db_dir` after re-add.
@@ -144,7 +144,7 @@ The util layer additionally provides: `init`, `backup_minigraph`, `restore_orig_
 
 ## Open items
 
-- [ ] *Open item*: `test_add_rack` is invoked with `skip_clet_test=True`; the configlet-only path therefore is **not** exercised by the active CI run despite being implemented in `apply_clet`. Decide whether the configlet path should be re-enabled or formally deprecated.
+- [x] ~~*Open item*: `test_add_rack` is invoked with `skip_clet_test=True`; the configlet-only path therefore is **not** exercised by the active CI run despite being implemented in `apply_clet`. Decide whether the configlet path should be re-enabled or formally deprecated.~~ — Resolved: opt-in switch `--enable_clet_test` added (see `tests/configlet/conftest.py`). CI default behaviour is unchanged; engineers can now exercise the configlet path on demand without editing source.
 - [ ] *Open item*: the JSON template for configlets is documented only in an external OneNote referenced from `tests/configlet/util/base_test.py`. The template should be checked into the repo for reproducibility.
 - [ ] DB-comparison `db_comp` skip-list (transient keys) is defined inside the util layer; document the canonical skip list.
 - [ ] No coverage for `generic_updater` rollback when patch fails partway.

@@ -15,3 +15,15 @@ def pytest_addoption(parser):
         default="cold",
         help="reboot type such as cold, fast, warm, soft"
     )
+
+    parser.addoption(
+        "--cpu_shaper_expected_pps",
+        action="store",
+        type=str,
+        default="0:600,7:600",
+        help=(
+            "Expected CPU queue shaper rate in pps, formatted as 'cos:pps' "
+            "pairs separated by commas. Example: '0:600,7:600'. "
+            "All listed cos queues must match exactly; queues not listed are ignored."
+        )
+    )

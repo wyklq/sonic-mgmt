@@ -26,12 +26,14 @@ DEST_DIR = "/tmp"
 CMD_GET_SHAPER = "bcmcmd 'cint {}'".format(BCM_CINT_FILENAME)
 
 
-def verify_cpu_queue_shaper(dut):
+def verify_cpu_queue_shaper(dut, expected_pps):
     """
     Verify cpu queue shaper configuration is as expected
 
     Args:
         dut (SonicHost): The target device
+        expected_pps (dict[int, int]): Expected ``{cos: pps_max}`` mapping; the
+            measured set must equal this mapping exactly.
     """
     # Copy cint script to /tmp on the device
     dut.copy(src="cpu_shaper/scripts/{}".format(BCM_CINT_FILENAME), dest=DEST_DIR)
@@ -42,12 +44,34 @@ def verify_cpu_queue_shaper(dut):
     # Execute the cint script and parse the output
     res = dut.shell(CMD_GET_SHAPER)['stdout']
 
-    # Expected shaper PPS configuration for CPU queues 0, and 7
-    expected_pps = {0: 600, 7: 600}
     pattern = r'cos=(\d+) pps_max=(\d+)'
     matches = re.findall(pattern, res)
     actual_pps = {int(cos): int(pps) for cos, pps in matches}
     assert (expected_pps == actual_pps)
+
+
+def _parse_expected_pps(spec):
+    """Parse a 'cos:pps,cos:pps,...' string into a ``{int: int}`` dict.
+
+    Raises ``pytest.UsageError`` on malformed input so the failure surfaces at
+    test-collection time instead of as an opaque AssertionError.
+    """
+    result = {}
+    for chunk in (s.strip() for s in spec.split(",") if s.strip()):
+        if ":" not in chunk:
+            raise pytest.UsageError(
+                "--cpu_shaper_expected_pps entry '{}' is not in 'cos:pps' form".format(chunk)
+            )
+        cos_str, pps_str = chunk.split(":", 1)
+        try:
+            result[int(cos_str)] = int(pps_str)
+        except ValueError:
+            raise pytest.UsageError(
+                "--cpu_shaper_expected_pps entry '{}' has non-integer cos/pps".format(chunk)
+            )
+    if not result:
+        raise pytest.UsageError("--cpu_shaper_expected_pps must define at least one cos:pps pair")
+    return result
 
 
 @pytest.mark.disable_loganalyzer
@@ -59,6 +83,7 @@ def test_cpu_queue_shaper(duthosts, localhost, enum_rand_one_per_hwsku_frontend_
     try:
         duthost = duthosts[enum_rand_one_per_hwsku_frontend_hostname]
         reboot_type = request.config.getoption("--cpu_shaper_reboot_type")
+        expected_pps = _parse_expected_pps(request.config.getoption("--cpu_shaper_expected_pps"))
 
         # Perform reboot as specified via the reboot_type parameter
         logger.info("Do {} reboot".format(reboot_type))
@@ -69,7 +94,7 @@ def test_cpu_queue_shaper(duthosts, localhost, enum_rand_one_per_hwsku_frontend_
         logger.info("Verify cpu queue shaper config after {} reboot".format(reboot_type))
 
         # Verify cpu queue shaper configuration
-        verify_cpu_queue_shaper(duthost)
+        verify_cpu_queue_shaper(duthost, expected_pps)
 
     finally:
         duthost.shell("rm {}/{}".format(DEST_DIR, BCM_CINT_FILENAME))

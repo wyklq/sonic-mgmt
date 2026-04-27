@@ -250,7 +250,7 @@ All tests live in `tests/sflow/test_sflow.py`.
 
 ## Open items
 
-- [ ] *Open item*: the source file references `--enable_sflow_feature` in its module docstring but the option is not registered in `tests/sflow/conftest.py` (which only contains a docstring). The fixture `config_sflow_feature` must define it elsewhere — verify and document.
+- [x] ~~*Open item*: the source file references `--enable_sflow_feature` in its module docstring but the option is not registered in `tests/sflow/conftest.py` (which only contains a docstring). The fixture `config_sflow_feature` must define it elsewhere — verify and document.~~ — Resolved: option is registered in the global `tests/conftest.py:199` (`parser.addoption("--enable_sflow_feature", action="store_true", default=False)`). Local conftest does not need to redeclare it.
 - [ ] *Open item*: PTF-side sample-rate tolerance is not asserted in this plan; document the threshold used by the `sflowtest` PTF runner.
 - [ ] Add a `soft` reboot variant case once supported.
 - [ ] Add an IPv6-collector variant.

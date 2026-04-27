@@ -120,7 +120,7 @@ Helper `verify_cpu_queue_shaper` and the cint probe live in `tests/cpu_shaper/te
 
 ## Open items
 
-- [ ] *Open item*: source `expected_pps` is hard-coded; if vendor templates legitimately change the default the test must be updated. Consider sourcing from the QoS profile.
+- [x] ~~*Open item*: source `expected_pps` is hard-coded; if vendor templates legitimately change the default the test must be updated. Consider sourcing from the QoS profile.~~ — Resolved: the expected `{cos: pps}` map is now configurable via `--cpu_shaper_expected_pps` (default `0:600,7:600`, preserves prior behaviour). Vendors with different shaper defaults can pass their own mapping without code edits.
 - [ ] *Open item*: only cos 0 and cos 7 are checked — all other CPU cos queues are uncovered.
 - [ ] No assertion that the cint script saw all expected cos entries before parsing — a malformed output could yield an empty actual dict and produce a confusing assertion message.
 - [ ] Add a soft-reboot-only matrix gating once kernel-fast-reboot path is supported on more SKUs.

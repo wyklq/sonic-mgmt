@@ -23,6 +23,7 @@
 | Rev | Date         | Author       | Change Description                                                              |
 |:---:|:-------------|:-------------|:--------------------------------------------------------------------------------|
 | 0.1 | 2026-04-27   | Y. Wu        | Initial test plan derived from existing automation in `tests/reset_factory/`.    |
+| 0.2 | 2026-04-27   | Y. Wu        | Switched docker restart detection from `.Created` to `.State.StartedAt` (resolves prior Open item). |
 
 ## Scope
 
@@ -83,7 +84,7 @@ Per case, before invoking `reset-factory`:
 
 1. `sudo useradd -m new_test_user -p test_user123` (probe user).
 2. `sudo touch <dir>/test_file` for every directory in the `only-config` and `keep-basic` lists.
-3. `docker container list` snapshot — for each container, record `docker inspect -f {{.Created}} <name>` as the baseline `org_start_time`.
+3. `docker container list` snapshot — for each container, record `docker inspect -f '{{.State.StartedAt}}' <name>` as the baseline start time. (`.State.StartedAt` reflects the last container start; unlike `.Created` it changes on every stop/start cycle, which is the actual behaviour reset_factory must be measured against.)
 
 ## Test methodology
 
@@ -96,9 +97,9 @@ For each invocation:
    - `verify_keep_all_config`: if `keep-all-config`, `/etc/sonic/config_db.json` must exist.
    - `verify_keep_basic`: probe file under `/home` must be present iff `only_config or keep_basic`; probe user `/home/new_test_user` must be deleted iff **not** (`only_config or keep_basic`).
    - `verify_only_config`:
-     - For each previously-running docker, retry-fetch its new `Created` time. The `database` docker's `Created` must be **unchanged**. Other dockers must:
-       - have a **newer** `Created` time when **not** `only_config` (they restarted), or
-       - keep the **same** `Created` time when `only_config` (they did not restart).
+     - For each previously-running docker, retry-fetch its new `.State.StartedAt`. The `database` docker's `StartedAt` must be **unchanged**. Other dockers must:
+       - have a **newer** `StartedAt` when **not** `only_config` (they restarted), or
+       - keep the **same** `StartedAt` when `only_config` (they did not restart).
      - For each `only_config` directory, the probe `test_file` must be present iff `only_config`.
 5. `clear_test_created_data`: best-effort delete of probe files / probe user.
 
@@ -115,7 +116,7 @@ Pass / fail is collected into a single `failure_info` string and asserted via `p
   - Probe `test_file` under each `only_config` directory is **deleted**.
   - Probe `test_file` under each `keep_basic` directory is **deleted**.
   - `/home/new_test_user` is **deleted**.
-  - `database` docker `Created` time is unchanged; all other previously-running dockers have a **newer** `Created` time.
+  - `database` docker `StartedAt` is unchanged; all other previously-running dockers have a **newer** `StartedAt`.
 
 ### Case RSTFAC-002 — `reset-factory keep-all-config`
 
@@ -136,7 +137,7 @@ Pass / fail is collected into a single `failure_info` string and asserted via `p
   - Probe `test_file` under each `only_config` directory **still exists**.
   - Probe `test_file` under each `keep_basic` directory **still exists**.
   - `/home/new_test_user` **still exists**.
-  - All previously-running dockers (including `database`) have **unchanged** `Created` time.
+  - All previously-running dockers (including `database`) have **unchanged** `StartedAt`.
 
 ### Case RSTFAC-004 — `reset-factory keep-basic`
 
@@ -169,7 +170,7 @@ Helper functions (`reset_factory`, `create_test_data`, `execute_reset_factory`, 
 ## Open items
 
 - [ ] *Open item*: `verify_keep_basic` only checks `/home` and the probe user; it does not validate `/home/<existing-user>/.bash_history` deletion nor any other "basic config" surface promised by the CLI doc string.
-- [ ] *Open item*: `check_running_dockers_after_reset_factory` uses `Created` time as a proxy for "restarted". A docker re-created with the same image but later may pass falsely if epoch resolution collides — currently mitigated only by retry/backoff (`@retry(Exception, delay=10, tries=18)`).
+- [x] ~~*Open item*: `check_running_dockers_after_reset_factory` uses `Created` time as a proxy for "restarted". A docker re-created with the same image but later may pass falsely if epoch resolution collides — currently mitigated only by retry/backoff (`@retry(Exception, delay=10, tries=18)`).~~ — Resolved: the helper now reads `.State.StartedAt`, which advances on every container start (whether by restart or recreate). Epoch-collision risk is reduced to within a 1-second window of two distinct stop/start cycles, which the existing retry/backoff already tolerates. Also bumped `Rev` to 0.2.
 - [ ] *Open item*: `keep_basic_test_directories = ["/home"]` makes the keep-basic verification very thin; expand once the `config-setup factory` reference doc enumerates the basic-config surface.
 - [ ] No assertion that the SONiC version, hostname, or hardware MAC survive the reset.
 

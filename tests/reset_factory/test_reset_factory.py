@@ -197,8 +197,7 @@ def get_running_dockers(duthost, dut_hostname):
     for line in output:
         line = line.split()
         docker_name = line[len(line) - 1]
-        start_time = run_command(duthost, r"docker inspect -f \{\{'.Created'\}\} " + docker_name, dut_hostname)
-        start_time = create_date_time_obj(start_time[0].split(".")[0])
+        start_time = _docker_started_at(duthost, docker_name, dut_hostname)
         logging.info("Running docker: {}, {}".format(docker_name, str(start_time)))
         running_dockers[docker_name] = start_time
     return running_dockers
@@ -220,6 +219,25 @@ def get_flags(str_flag):
 def create_date_time_obj(str_info):
     datetime_object = datetime.strptime(str_info, '%Y-%m-%dT%H:%M:%S')
     return datetime_object
+
+
+def _docker_started_at(duthost, docker_name, dut_hostname):
+    """Return the container's last start time as a ``datetime``.
+
+    Uses ``.State.StartedAt`` (changes on every container start), not
+    ``.Created`` (immutable for the container's lifetime). This is the
+    correct field for detecting a stop/start cycle caused by reset_factory.
+
+    Docker emits the timestamp as ``YYYY-MM-DDTHH:MM:SS.fffffffffZ``;
+    fractional seconds and the trailing ``Z`` are stripped before parsing.
+    """
+    output = run_command(
+        duthost,
+        r"docker inspect -f \{\{'.State.StartedAt'\}\} " + docker_name,
+        dut_hostname,
+    )
+    raw = output[0].split(".")[0].rstrip("Z")
+    return create_date_time_obj(raw)
 
 
 def ssh_client(host, user, passwd):
@@ -286,10 +304,9 @@ def check_running_dockers_after_reset_factory(duthost, only_config, running_dock
 
 @retry(Exception, delay=10, tries=18)
 def get_docker_start_time(duthost, docker_name, dut_hostname):
-    output = run_command(duthost, r"docker inspect -f \{\{'.Created'\}\} " + docker_name, dut_hostname)
-    create_time = create_date_time_obj(output[0].split(".")[0])
-    logging.info("{} - {}".format(docker_name, str(create_time)))
-    return create_time
+    started_at = _docker_started_at(duthost, docker_name, dut_hostname)
+    logging.info("{} - {}".format(docker_name, str(started_at)))
+    return started_at
 
 
 def clear_test_created_data(duthost, dut_hostname):

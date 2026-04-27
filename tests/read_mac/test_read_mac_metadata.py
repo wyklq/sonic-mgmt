@@ -1,3 +1,5 @@
+import os
+
 import pytest
 import logging
 
@@ -46,13 +48,20 @@ def cleanup_read_mac(duthosts, enum_rand_one_per_hwsku_frontend_hostname, localh
 
 class ReadMACMetadata():
     def __init__(self, request):
-        image1 = request.config.getoption("--image1", default=None)
-        image2 = request.config.getoption("--image2", default=None)
+        image1 = request.config.getoption("--image1", default=None) or os.environ.get("SONIC_TEST_IMAGE1")
+        image2 = request.config.getoption("--image2", default=None) or os.environ.get("SONIC_TEST_IMAGE2")
         self.iteration = request.config.getoption("--iteration", default=1)
         self.minigraph1 = request.config.getoption("--minigraph1", default=None)
         self.minigraph2 = request.config.getoption("--minigraph2", default=None)
         if not image1 or not image2:
-            pytest.skip("Skip test due to missing --image1 or --image2")
+            pytest.skip(
+                "Skip test due to missing image binaries. Provide both via "
+                "--image1=<url> --image2=<url> on the pytest command line, or "
+                "via the environment variables SONIC_TEST_IMAGE1 and "
+                "SONIC_TEST_IMAGE2. URLs are downloaded to the localhost "
+                "Ansible controller and then copied to the DUT, so they must "
+                "match the DUT's platform/ASIC."
+            )
 
         if self.iteration < 1:
             pytest.fail("Please specify --iteration in correct range")

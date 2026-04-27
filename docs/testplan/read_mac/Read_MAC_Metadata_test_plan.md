@@ -20,6 +20,7 @@
 | Rev | Date         | Author       | Change Description                                                            |
 |:---:|:-------------|:-------------|:------------------------------------------------------------------------------|
 | 0.1 | 2026-04-27   | Y. Wu        | Initial test plan derived from existing automation in `tests/read_mac/`.       |
+| 0.2 | 2026-04-27   | Y. Wu        | Image inputs now also accepted via `SONIC_TEST_IMAGE1` / `SONIC_TEST_IMAGE2` env vars; clearer skip message. |
 
 ## Scope
 
@@ -67,8 +68,8 @@ Required pytest options (added by the test itself via `request.config.getoption`
 
 | Option         | Required | Meaning                                                            |
 |----------------|----------|--------------------------------------------------------------------|
-| `--image1`     | yes      | URL of the first SONiC image. If missing, test is `pytest.skip`.   |
-| `--image2`     | yes      | URL of the second SONiC image. If missing, test is `pytest.skip`.  |
+| `--image1`     | yes\*    | URL of the first SONiC image. If missing on the command line, falls back to `$SONIC_TEST_IMAGE1`. If still missing, test is `pytest.skip`. |
+| `--image2`     | yes\*    | URL of the second SONiC image. If missing on the command line, falls back to `$SONIC_TEST_IMAGE2`. If still missing, test is `pytest.skip`. |
 | `--iteration`  | no (default 1) | Number of install + reboot iterations. Must be ≥ 1.          |
 | `--minigraph1` | no       | Path on the localhost to a minigraph used on odd iterations.       |
 | `--minigraph2` | no       | Path on the localhost to a minigraph used on even iterations.      |
@@ -131,7 +132,7 @@ Helper class `ReadMACMetadata` and fixture `cleanup_read_mac` live in the same f
 
 ## Open items
 
-- [ ] *Open item — image artifacts*: `--image1` / `--image2` URLs must be supplied externally; the test plan does not standardize where the artifacts come from. Document a canonical CI artifact source.
+- [ ] *Open item — image artifacts*: `--image1` / `--image2` URLs (or the equivalent `SONIC_TEST_IMAGE1` / `SONIC_TEST_IMAGE2` env vars) must be supplied externally; the test plan still does not standardize where the artifacts come from. Document a canonical CI artifact source per platform/branch.
 - [ ] *Open item — disk reduction*: the test relies on `reduce_and_add_sonic_images(disk_used_pcent=1)` succeeding; on small-disk platforms this may fail. Add a platform skip when applicable.
 - [ ] Cover MTU values other than 9100 once non-default profiles are in scope.
 

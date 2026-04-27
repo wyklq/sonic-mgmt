@@ -1,149 +1,311 @@
-# PFC 对称/非对称测试计划
+# PFC Asymmetric Mode Test Plan
 
-## 概述
+- [PFC Asymmetric Mode Test Plan](#pfc-asymmetric-mode-test-plan)
+  - [Revision](#revision)
+  - [Scope](#scope)
+  - [Definitions / Abbreviations](#definitions--abbreviations)
+  - [Background](#background)
+    - [Symmetric vs. Asymmetric PFC](#symmetric-vs-asymmetric-pfc)
+    - [SONiC implementation surface](#sonic-implementation-surface)
+  - [Testbed](#testbed)
+    - [Topology](#topology)
+    - [Hardware / fixture requirements](#hardware--fixture-requirements)
+  - [Setup configuration](#setup-configuration)
+    - [DUT pre-conditions](#dut-pre-conditions)
+    - [CONFIG\_DB / CLI](#config_db--cli)
+    - [PTF / Fanout configuration](#ptf--fanout-configuration)
+  - [Test methodology](#test-methodology)
+    - [Traffic generation](#traffic-generation)
+    - [Verification points](#verification-points)
+    - [Pass / Fail criteria (global)](#pass--fail-criteria-global)
+  - [Test cases](#test-cases)
+    - [Case PFC-ASYM-001 — Asymmetric OFF, DUT-generated PFC restricted to lossless priorities](#case-pfc-asym-001--asymmetric-off-dut-generated-pfc-restricted-to-lossless-priorities)
+    - [Case PFC-ASYM-002 — Asymmetric OFF, DUT reaction to received PFC restricted to lossless priorities](#case-pfc-asym-002--asymmetric-off-dut-reaction-to-received-pfc-restricted-to-lossless-priorities)
+    - [Case PFC-ASYM-003 — Asymmetric ON, DUT-generated PFC restricted to lossless priorities (TX semantics unchanged)](#case-pfc-asym-003--asymmetric-on-dut-generated-pfc-restricted-to-lossless-priorities-tx-semantics-unchanged)
+    - [Case PFC-ASYM-004 — Asymmetric ON, DUT reacts to PFC on all priorities](#case-pfc-asym-004--asymmetric-on-dut-reacts-to-pfc-on-all-priorities)
+  - [Test case ↔ implementation mapping](#test-case--implementation-mapping)
+  - [Out of scope](#out-of-scope)
+  - [Open items](#open-items)
+  - [References](#references)
 
-本文档描述 PFC（Priority Flow Control）对称（Symmetric）和非对称（Asymmetric）模式的测试计划。
+## Revision
 
-## 背景
+| Rev | Date         | Author       | Change Description                                                                 |
+|:---:|:-------------|:-------------|:-----------------------------------------------------------------------------------|
+| 0.1 | 2026-04-24   | Y. Wu        | Initial skeleton (commit 6fd34d7).                                                  |
+| 0.2 | 2026-04-27   | Y. Wu        | Aligned with `tests/pfc_asym/test_pfc_asym.py`; added topology, CONFIG_DB schema, per-case steps, pass/fail criteria, traceability matrix. Removed unverified `RoCE` cross-cutting claims (split to a separate plan). |
 
-### PFC 对称模式（Symmetric PFC）
-- 所有优先级使用相同的 PFC 配置
-- TX 和 RX 方向的暂停帧处理一致
-- 适用于简单的无损网络部署
+## Scope
 
-### PFC 非对称模式（Asymmetric PFC）
-- TX 和 RX 方向可以独立配置
-- 允许某些优先级仅在一个方向启用 PFC
-- 更灵活的流量控制策略
-- 适用于复杂的 RoCE v2 部署场景
+This plan covers functional verification of the **Asymmetric PFC** feature on SONiC, as defined by the SAI attribute `SAI_PORT_ATTR_PRIORITY_FLOW_CONTROL_MODE` and exercised by `tests/pfc_asym/`.
 
-## 测试范围
+Specifically, the plan verifies that:
 
-### 1. PFC 对称模式测试
+1. With asymmetric PFC **disabled** (`SEPARATE` mode unset / `COMBINED` mode), TX generation and RX reaction to PFC PAUSE frames are both restricted to the priorities configured as **lossless** (default: priorities 3 and 4 in SONiC).
+2. With asymmetric PFC **enabled** (`SAI_PORT_PRIORITY_FLOW_CONTROL_MODE_SEPARATE`), TX generation remains restricted to lossless priorities, but the **RX direction reacts to PFC PAUSE on all 8 priorities**, including lossy ones.
 
-#### 1.1 基础功能测试
-- 启用对称 PFC
-- 验证所有优先级的 PFC 配置一致
-- 验证 TX/RX 方向行为一致
+Performance characterization, RoCEv2 end-to-end testing, multi-tenant isolation, and PFC Watchdog interaction are explicitly **out of scope** and tracked by separate plans (see [Out of scope](#out-of-scope)).
 
-#### 1.2 对称 PFC 暂停帧测试
-- 生成 PFC 暂停帧（所有优先级）
-- 验证 DUT 正确响应暂停帧
-- 验证暂停持续时间正确
+## Definitions / Abbreviations
 
-#### 1.3 对称 PFC 与 Lossless 队列
-- 配置 Lossless 队列（优先级 3, 4）
-- 验证 PFC 仅对配置的优先级生效
-- 验证 Lossy 队列不受影响
+| Term            | Meaning                                                                                       |
+|-----------------|-----------------------------------------------------------------------------------------------|
+| PFC             | Priority-based Flow Control, IEEE 802.1Qbb.                                                    |
+| Lossless prio   | Traffic class for which PFC is enabled and headroom buffer is allocated. Default: 3, 4.         |
+| Lossy prio      | Traffic class for which PFC is not enabled. Default: 0, 1, 2, 5, 6, 7.                          |
+| Symmetric PFC   | A single per-priority enable bitmap controls both TX (PFC frame generation) and RX (reaction).  |
+| Asymmetric PFC  | TX bitmap and RX bitmap are decoupled. SONiC implementation forces RX to react on all priorities when enabled. |
+| PFC storm       | Continuous stream of PFC PAUSE frames generated by a Fanout/Keysight to stall a DUT queue.       |
+| `pfc_storm_runner` | sonic-mgmt fixture that starts/stops a PFC storm on the Fanout-side port.                     |
 
-### 2. PFC 非对称模式测试
+## Background
 
-#### 2.1 非对称 PFC 启用测试
-- 启用非对称 PFC
-- 配置 TX 和 RX 方向不同的 PFC 优先级
-- 验证配置正确应用
+### Symmetric vs. Asymmetric PFC
 
-#### 2.2 TX 方向 PFC 测试
-- 仅启用 TX 方向 PFC
-- 验证 DUT 发送 PFC 暂停帧
-- 验证 RX 方向不处理 PFC 帧
+In symmetric mode (the SONiC default), the per-port PFC enable vector applies identically to both directions. A receiver only honors PFC for the priorities it has enabled locally, and only generates PFC for those same priorities when its own ingress queue crosses the XOFF threshold.
 
-#### 2.3 RX 方向 PFC 测试
-- 仅启用 RX 方向 PFC
-- 验证 DUT 处理接收到的 PFC 暂停帧
-- 验证 TX 方向不发送 PFC 帧
+Asymmetric PFC decouples the two directions. The SAI specification defines the mode via:
 
-#### 2.4 混合方向测试
-- TX 启用某些优先级，RX 启用其他优先级
-- 验证各自方向独立工作
-- 验证无相互干扰
+```
+sai_port_priority_flow_control_mode_t {
+    SAI_PORT_PRIORITY_FLOW_CONTROL_MODE_COMBINED = 0,   // symmetric
+    SAI_PORT_PRIORITY_FLOW_CONTROL_MODE_SEPARATE = 1,   // asymmetric
+}
+```
 
-### 3. PFC 非对称与 RoCE v2
+When `SEPARATE` is configured on a port, SONiC programs the chip so that:
 
-#### 3.1 RoCE v2 场景测试
-- 配置 RoCE v2 流量（优先级 3/4）
-- 启用非对称 PFC
-- 验证 RDMA 流量在无损队列正确传输
+- **TX**: PFC frames are still generated only for lossless priorities (driven by buffer/headroom thresholds on those queues).
+- **RX**: PFC PAUSE frames received on the wire are honored on **all** 8 priorities, regardless of the local lossless configuration. This is the safety-net behaviour that allows a SONiC ToR to participate in a network where an upstream device pauses on additional priorities.
 
-#### 3.2 非对称 PFC 与 ECN
-- 配置 ECN 和 PFC 共存
-- 验证 ECN 标记和 PFC 暂停帧正确协作
-- 验证拥塞控制策略
+### SONiC implementation surface
 
-## 测试用例
+| Layer        | Object                                                                                  |
+|--------------|------------------------------------------------------------------------------------------|
+| CLI          | `config interface pfc asymmetric <ifname> {on,off}` (via `sonic-utilities`).             |
+| CONFIG_DB    | `PORT|<ifname>` field `pfc_asym = on \| off`.                                            |
+| orchagent    | `PortsOrch::setPortPfcAsym()` (see `swss/orchagent/portsorch.cpp`).                       |
+| SAI          | `SAI_PORT_ATTR_PRIORITY_FLOW_CONTROL_MODE`, `SAI_PORT_ATTR_PRIORITY_FLOW_CONTROL_RX`.    |
+| State        | `STATE_DB:PORT_TABLE|<ifname>:pfc_asym` reflects realized state.                         |
 
-| 用例 ID | 测试场景 | 预期结果 |
-|---------|---------|----------|
-| PFC-ASYM-001 | 禁用非对称 PFC，验证 TX PFC 帧 | DUT 在所有 Lossless 优先级生成 PFC 帧 |
-| PFC-ASYM-002 | 禁用非对称 PFC，验证 RX PFC 处理 | DUT 在所有优先级处理 PFC 帧 |
-| PFC-ASYM-003 | 启用非对称 PFC，TX 仅优先级 3 | 仅优先级 3 发送 PFC 帧 |
-| PFC-ASYM-004 | 启用非对称 PFC，RX 仅优先级 4 | 仅优先级 4 处理 PFC 帧 |
-| PFC-ASYM-005 | TX/RX 不同优先级组合 | 各自方向独立工作 |
-| PFC-ASYM-006 | 非对称 PFC + RoCE v2 | RDMA 流量正常传输 |
-| PFC-ASYM-007 | 非对称 PFC + ECN | ECN 和 PFC 正确协作 |
+## Testbed
 
-## 测试配置
+### Topology
 
-### SONiC CLI 配置
+`t0` topology is required. The relevant subset is:
+
+```
+            +-------------------+
+            |     Fanout sw     |  <- runs PFC storm via pfc_gen
+            +---------+---------+
+                      |  multi-prio DSCP traffic + PFC frames
+                  ServerPort
+            +---------v---------+
+            |       DUT         |  <- SONiC, asymmetric PFC under test
+            +---------+---------+
+                  NonServerPort
+                      |
+            +---------v---------+
+            |        PTF        |  <- saitests/pfc_asym.* runner
+            +-------------------+
+```
+
+- **ServerPort** = a downlink port modeled as facing a server (carries PFC storm in RX-direction tests).
+- **NonServerPort** = an uplink port (used for TX-direction PFC frame capture).
+
+The exact port roles are derived by the `setup` fixture in `tests/common/fixtures/pfc_asym.py`.
+
+### Hardware / fixture requirements
+
+| Requirement | Notes |
+|-------------|-------|
+| `swapSyncd` | Required (the suite uses `prepare_syncdrpc(swapSyncd)` autouse fixture); the DUT runs syncd-rpc to allow PTF→SAI introspection. |
+| Fanout switch with `pfc_gen` | Used by `pfc_storm_runner`. Arista/Mellanox fanouts in the lab inventory both qualify. |
+| PTF host with `saitests` package deployed | The Python tests trigger `ptf_runner(... "saitests", "pfc_asym.PfcAsym*Test", ...)`. |
+| Default lossless priorities | 3 and 4 (`Ctrl-Plane` and standard SONiC QoS profile). Plan assumes defaults; non-default profiles must be re-baselined. |
+
+## Setup configuration
+
+### DUT pre-conditions
+
+1. SONiC image with PFC asymmetric support in `swss` ≥ 201811. Confirm by:
+   ```bash
+   docker exec swss orchagent -h 2>&1 | grep -i pfc_asym  # presence not required, sanity check
+   show interfaces status                                   # all DUT ports up
+   ```
+2. Default QoS profile loaded (`/etc/sonic/qos.json.j2` rendered into APPL_DB).
+3. PFC enabled on lossless priorities for all participating interfaces:
+   ```bash
+   sudo config interface pfc priority Ethernet0 3 on
+   sudo config interface pfc priority Ethernet0 4 on
+   ```
+
+### CONFIG_DB / CLI
+
+Enable asymmetric PFC on a single port:
 
 ```bash
-# 启用 PFC
-sudo config interface pfc priority 3 4
-
-# 配置非对称 PFC（如支持）
-sudo config pfc asymmetric enable
-
-# 仅配置 TX 方向
-sudo config pfc tx priority 3
-
-# 仅配置 RX 方向
-sudo config pfc rx priority 4
+sudo config interface pfc asymmetric Ethernet0 on
 ```
 
-### 验证配置
+Equivalent CONFIG_DB write:
+
+```json
+{
+  "PORT|Ethernet0": {
+    "pfc_asym": "on"
+  }
+}
+```
+
+Verification:
 
 ```bash
-# 查看 PFC 配置
-show pfc priority
-
-# 查看 PFC 统计
-show pfc counters
+redis-cli -n 4 HGET "PORT|Ethernet0" pfc_asym         # CONFIG_DB
+redis-cli -n 6 HGET "PORT_TABLE|Ethernet0" pfc_asym   # STATE_DB (post-orch)
+show pfc asymmetric                                   # human-readable
 ```
 
-## 测试代码
+Disable:
 
+```bash
+sudo config interface pfc asymmetric Ethernet0 off
 ```
-tests/pfc_asym/test_pfc_asym.py
-```
 
-## 测试拓扑
+### PTF / Fanout configuration
 
-需要 T0 拓扑（DUT + PTF + VMs）
+The `setup` fixture (`tests/common/fixtures/pfc_asym.py`) provisions:
 
-## 相关功能
+- `setup["ptf_test_params"]`: per-port mapping (DSCP↔priority↔queue), MAC/IP of the DUT-facing PTF interface, expected XOFF/XON behaviour table, and inner/outer VLAN tags.
+- `enable_pfc_asym` fixture: toggles asymmetric mode on **all server-facing interfaces**, with teardown that restores the prior state.
+- `pfc_storm_runner`: SSH-driven helper that starts/stops `pfc_gen` on the Fanout port that connects to either `server_ports` or `non_server_port`, depending on the test direction.
 
-- **RoCE v2** - RDMA over Converged Ethernet v2
-- **Lossless Queues** - 无丢包队列
-- **ECN** - 显式拥塞通知 (`../ecn/`)
-- **Buffer Management** - 缓冲区管理
+## Test methodology
 
-## 参考文档
+### Traffic generation
 
-- [SONiC PFC Documentation](https://github.com/sonic-net/SONiC/wiki/PFC)
-- [PFC Asymmetric Test](../../tests/pfc_asym/)
-- [RoCE v2 Specification](https://www.infinibandta.org/roce/)
-- [IEEE 802.1Qbb](https://standards.ieee.org/standard/802_1Qbb-2011.html)
+Two traffic classes are injected from PTF:
 
-## 待办事项
+- **Lossless flows**: DSCP 3 and 4 (mapped to priorities 3 and 4 → lossless queues).
+- **Lossy flows**: DSCP 0, 1, 2, 5, 6, 7.
 
-- [ ] 补充非对称 PFC 性能测试
-- [ ] 添加更多 RoCE v2 场景测试
-- [ ] 完善混合方向压力测试
+PFC PAUSE frames are not generated by PTF; they are generated by the Fanout via `pfc_storm_runner` at the configured priority bitmap.
 
-## 状态说明
+### Verification points
 
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+For each case, the PTF SAI test (`pfc_asym.PfcAsym*Test`) verifies a subset of:
+
+- **TX-direction**: Wireshark-style capture on `NonServerPort` of PFC PAUSE frames; assert the priority-enable vector matches the expected bitmap and `time(n)` is non-zero only for the asserted priorities.
+- **RX-direction**: Inject a fixed-rate flow per priority while a PFC storm targets that priority; observe per-queue counters (`SAI_QUEUE_STAT_DROPPED_PACKETS`, `SAI_QUEUE_STAT_PACKETS`) and ingress drop counters (`SAI_PORT_STAT_PFC_${n}_RX_PKTS`, `SAI_PORT_STAT_IN_DROPPED_PKTS`) to determine whether the queue paused or dropped.
+
+### Pass / Fail criteria (global)
+
+A case passes only if **all** of the following hold:
+
+1. The expected per-priority TX/RX behaviour bitmap matches the captured behaviour.
+2. No traffic loss occurs on priorities that should be paused (lossless behaviour preserved).
+3. Packet loss occurs **only** on priorities for which PFC is not honored and whose ingress queue is congested.
+4. STATE_DB and counters return to the baseline within the fixture teardown (`pfc_asym = off`, queue stats reset).
+
+Any unexpected drop on a paused-priority queue, or any PFC frame generated for a lossy priority, is a **fail**.
+
+## Test cases
+
+### Case PFC-ASYM-001 — Asymmetric OFF, DUT-generated PFC restricted to lossless priorities
+
+- **Test Objective**: Confirm that with asymmetric PFC disabled (default), the DUT generates PFC PAUSE frames only on lossless priorities (3, 4) when its own ingress queues fill up.
+- **Test Configuration**:
+  - `pfc_asym = off` on all server-facing ports.
+  - PTF injects line-rate traffic on all 8 priorities toward `NonServerPort`, sized to overrun `NonServerPort` egress queues.
+  - Storm runner attached to `non_server_port = True` (direction: DUT → Fanout).
+- **Test Steps**:
+  1. Apply pre-conditions; assert `redis-cli -n 4 HGET PORT|<port> pfc_asym` returns `off` (or absent).
+  2. Trigger `pfc_storm_runner.run()` on `NonServerPort` to backpressure the DUT egress.
+  3. PTF runs `pfc_asym.PfcAsymOffOnTxTest` and captures PFC frames egressing the Fanout-facing port.
+  4. Assert: priority-enable vector has bits 3 and 4 set; bits 0, 1, 2, 5, 6, 7 cleared; `time(n)` non-zero for n∈{3,4}.
+  5. Stop storm; allow counters to drain; teardown restores the port state.
+- **Pass criteria**: TX vector exactly `0b00011000`; no PFC frame observed on lossy priorities for the entire test window.
+
+### Case PFC-ASYM-002 — Asymmetric OFF, DUT reaction to received PFC restricted to lossless priorities
+
+- **Test Objective**: With asymmetric PFC disabled, the DUT must honor incoming PFC PAUSE frames **only** on lossless priorities. Lossy priorities must drop on congestion rather than pause.
+- **Test Configuration**:
+  - `pfc_asym = off`.
+  - Storm runner targets `server_ports = True`; Fanout sends PFC frames asserting all 8 priorities.
+  - PTF injects per-priority unicast flows whose destination egress queue is sized to congest while paused.
+- **Test Steps**:
+  1. Pre-condition check as in 001.
+  2. Start PFC storm on Fanout (priority bitmap = `0xFF`).
+  3. PTF runs `pfc_asym.PfcAsymOffRxTest`, injecting traffic on all priorities.
+  4. Read SAI queue counters per priority before and after the run.
+  5. Assert: queues 3 and 4 show **zero drops** (paused); queues 0,1,2,5,6,7 show drops proportional to injected rate (DUT did not honor PFC for them).
+- **Pass criteria**: Drop counter delta on lossless queues == 0; drop counter delta on lossy queues > 0 and within ±5% of the expected `(injected_rate − egress_rate) × duration`.
+
+### Case PFC-ASYM-003 — Asymmetric ON, DUT-generated PFC restricted to lossless priorities (TX semantics unchanged)
+
+- **Test Objective**: Asymmetric mode must **not** alter TX-direction PFC generation; only the RX honoring is broadened. This is a regression guard against accidentally enabling TX on lossy priorities when toggling asymmetric mode.
+- **Test Configuration**:
+  - `enable_pfc_asym` fixture sets `pfc_asym = on` on all server-facing ports.
+  - Same congestion scenario as 001.
+- **Test Steps**:
+  1. Apply `enable_pfc_asym`; verify STATE_DB shows `pfc_asym = on`.
+  2. Repeat steps 2–5 from PFC-ASYM-001.
+- **Pass criteria**: identical to PFC-ASYM-001 (TX vector `0b00011000`).
+
+### Case PFC-ASYM-004 — Asymmetric ON, DUT reacts to PFC on all priorities
+
+- **Test Objective**: With asymmetric PFC enabled, the DUT must honor incoming PFC PAUSE frames on **all 8 priorities**, preventing drops on lossy queues that would otherwise occur.
+- **Test Configuration**:
+  - `enable_pfc_asym = on`.
+  - Same storm/inject scenario as 002.
+- **Test Steps**:
+  1. Apply `enable_pfc_asym`.
+  2. Start PFC storm on Fanout (priority bitmap = `0xFF`).
+  3. PTF runs `pfc_asym.PfcAsymOnRxTest`.
+  4. Read per-queue SAI counters.
+  5. Assert: drop counter delta == 0 on **all 8** queues. Per-queue `SAI_QUEUE_STAT_PACKETS` should be ≤ injected count − in-flight, with the gap accounted for by paused traffic still buffered.
+- **Pass criteria**: Zero drops on all 8 queues for the duration of the storm; counters return to baseline within teardown.
+
+## Test case ↔ implementation mapping
+
+| Plan ID         | Pytest function                                | PTF SAI test class                | Direction | Asym mode |
+|-----------------|------------------------------------------------|-----------------------------------|-----------|-----------|
+| PFC-ASYM-001    | `test_pfc_asym_off_tx_pfc`                     | `pfc_asym.PfcAsymOffOnTxTest`     | TX        | off       |
+| PFC-ASYM-002    | `test_pfc_asym_off_rx_pause_frames`            | `pfc_asym.PfcAsymOffRxTest`       | RX        | off       |
+| PFC-ASYM-003    | `test_pfc_asym_on_tx_pfc`                      | `pfc_asym.PfcAsymOffOnTxTest`     | TX        | on        |
+| PFC-ASYM-004    | `test_pfc_asym_on_handle_pfc_all_prio`         | `pfc_asym.PfcAsymOnRxTest`        | RX        | on        |
+
+Source files: `tests/pfc_asym/test_pfc_asym.py`, `tests/common/fixtures/pfc_asym.py`, `ptftests/saitests/pfc_asym.py` (PTF side).
+
+When new pytest functions are added under `tests/pfc_asym/`, this table **must** be updated in the same PR; CI will gate on a documentation-grep check (proposed, see [Open items](#open-items)).
+
+## Out of scope
+
+The following items were initially folded into earlier drafts of this plan; they are tracked separately because they exercise distinct code paths and require different testbeds:
+
+- **RoCEv2 end-to-end functional / performance**: requires CX-series RNICs and `perftest` harness; no SONiC-side asymmetric-PFC code path is exclusive to RoCEv2. Move to a dedicated `RoCE_v2_TEST_PLAN.md` (currently a skeleton — pending rewrite).
+- **PFC Watchdog interaction**: covered by `docs/testplan/pfcwd/`.
+- **ECN / DCQCN co-existence**: covered by `docs/testplan/ecn/` and `docs/testplan/PFC_Congestion_Oversubscription_Test_Plan.md`.
+- **Snappi / Keysight large-scale traffic**: covered by `docs/testplan/PFC_Snappi_Additional_Testcases.md`.
+
+## Open items
+
+- [ ] Add a CI lint that diff-checks the [traceability table](#test-case--implementation-mapping) against `tests/pfc_asym/test_*.py` symbol list.
+- [ ] Extend cases to non-default lossless profiles (e.g., priority 5/6 lossless) once `qos_profiles/` provides such profiles.
+- [ ] Add a soak variant (>10 min storm) gated on `--include-soak` to detect counter rollover or orchagent leak.
+- [ ] Cover dynamic toggling: assert `off→on→off` produces clean STATE_DB transitions and no transient PFC-to-lossy emission.
+
+## References
+
+- IEEE 802.1Qbb-2011, *Priority-based Flow Control* — <https://standards.ieee.org/standard/802_1Qbb-2011.html>
+- SAI specification, `sai_port_priority_flow_control_mode_t` — <https://github.com/opencomputeproject/SAI/blob/master/inc/saiport.h>
+- SONiC PFC wiki — <https://github.com/sonic-net/SONiC/wiki/PFC>
+- Companion plans:
+  - `PFC-test-plan.md` (baseline PFC functional plan)
+  - `PFC_PAUSE_LOSSLESS_README.md`, `PFC_PAUSE_LOSSY_README.md`, `PFC_PAUSE_RESPONSE_HEADROOM_README.md`
+  - `../pfcwd/README.md` (PFC Watchdog)
+  - `../ecn/README.md` (ECN interaction)
+- Implementation:
+  - `tests/pfc_asym/test_pfc_asym.py`
+  - `tests/common/fixtures/pfc_asym.py`
+  - `ptftests/saitests/pfc_asym.py`

@@ -1,68 +1,27 @@
-# DNS (Domain Name System) 测试计划
+# DNS（静态 DNS） / Static DNS 测试计划 Test Plans
 
-此目录包含 SONiC DNS（域名系统）相关的测试计划文档。
+> SONiC 静态 DNS 配置与解析行为的测试计划。Test plan for SONiC static DNS configuration and resolution behavior.
 
-## 测试计划列表
+## 文档列表 Documents
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `static-dns-test-plan.md` | ✅ | 静态 DNS 测试计划 |
+| 文档 | 类型 | 说明 |
+|------|------|------|
+| `static-dns-test-plan.md` | Test Plan | 静态 DNS 服务器配置、persist、resolv.conf 同步等验证 |
 
-## 测试范围
+## 测试代码 Test Code
 
-### 1. 静态 DNS 配置
-- 静态 DNS 服务器配置
-- DNS 解析测试
-- 多 DNS 服务器
-- DNS 查询超时
+- `tests/dns/` — 静态 DNS 相关 pytest 用例。
 
-### 2. DNS 解析功能
-- A 记录查询
-- AAAA 记录查询
-- CNAME 记录查询
-- 反向 DNS 查询
+## 覆盖范围 Coverage
 
-### 3. 高可用性
-- 主备 DNS 服务器切换
-- DNS 服务器故障处理
-- 重试机制
+- 静态 DNS 服务器的添加 / 删除 / 持久化
+- CONFIG_DB 与 `/etc/resolv.conf` 同步
+- 多服务器优先级与解析行为
 
-## 相关功能
+## 相关 Related
 
-- **Management Interface** - 管理接口
-- **Network Configuration** - 网络配置
-- **Resolv.conf** - DNS 配置文件
+- [SONiC Static DNS HLD](https://github.com/sonic-net/SONiC/blob/master/doc/dns/static_dns.md)
 
-## 测试代码位置
+## 参考 References
 
-```
-tests/dns/
-```
-
-## DNS 工作原理
-
-DNS 将域名转换为 IP 地址：
-1. 应用发起域名查询
-2. 系统查询配置的 DNS 服务器
-3. DNS 服务器返回 IP 地址
-4. 应用使用 IP 地址建立连接
-
-## 参考文档
-
-- [SONiC DNS Documentation](https://github.com/sonic-net/SONiC/wiki/DNS)
-- [Static DNS Test Plan](static-dns-test-plan.md)
-- [RFC 1035 - DNS Implementation](https://tools.ietf.org/html/rfc1035)
-
-## 待办事项
-
-- [ ] 补充动态 DNS (DDNS) 测试计划
-- [ ] 添加 DNS over TLS (DoT) 测试
-- [ ] 完善 DNS 安全扩展 (DNSSEC) 测试
-
-## 状态说明
-
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+- RFC 1034 / 1035

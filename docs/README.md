@@ -24,11 +24,11 @@ Using of pytest does not mean that ansible will no long be used. Ansible is stil
 # Documentations
 
 * [Testbed](testbed/README.md)
-* [Write and run pytest](tests/README.md) - **[TODO: Create tests/README.md]**
-* [Testplan](testplan)
-* [Test Reporting](test_reporting/README.md)
-* [api_wiki](api_wiki/README.md)
-* [Spytest](spytest/)
-  * [Introduction](spytest/Doc/intro.md)
-  * [Install](spytest/Doc/install.md)
-* [Ansible](https://github.com/sonic-net/sonic-mgmt/tree/master/ansible) - **[TODO: Create ansible/README.md]**
+* [Write and run pytest](../tests/README.md)
+* [Testplan](testplan/README.md)
+* [Test Reporting](../test_reporting/README.md)
+* [api_wiki](../api_wiki/README.md)
+* [Spytest](../spytest/)
+  * [Introduction](../spytest/Doc/intro.md)
+  * [Install](../spytest/Doc/install.md)
+* [Ansible](../ansible/README.md)

@@ -37,10 +37,10 @@
 | 文件 | 描述 |
 |------|------|
 | `testbed.yaml` | 主要 testbed 定义文件（推荐使用） |
-| `testbed-new.yaml` | 新版 testbed 定义 |
-| `testbed.csv` | 旧版 testbed 定义（CSV 格式，已废弃） |
-| `vtestbed.yaml` | 虚拟 testbed 配置 |
-| `veos_vtb` | vEOS testbed 配置 |
+| `testbed-new.yaml` | 实验/演进中的 testbed 定义格式 |
+| `testbed.nut.yaml` / `testbed.vnut.yaml` | NUT (Network Under Test) 系列定义 |
+| `vtestbed.yaml` | 虚拟 testbed 配置（VS testbed） |
+| `veos_vtb` | vEOS 虚拟 testbed 的 inventory |
 | `inventory` | Ansible inventory 文件 |
 
 ## 使用方法
@@ -81,8 +81,4 @@ ansible-playbook -i inventory config_sonic_basedon_testbed.yml -e "testbed_name=
 - [Main Documentation](../docs/README.md)
 - [Ansible Official Documentation](https://docs.ansible.com/)
 
-## 待完善
 
-- [ ] 补充各 role 的详细文档
-- [ ] 添加更多使用示例
-- [ ] 完善自定义模块说明

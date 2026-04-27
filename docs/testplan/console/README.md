@@ -1,67 +1,35 @@
-# Console 测试计划
+# Console（控制台） / Console 测试计划 Test Plans
 
-此目录包含 SONiC 控制台（Console）相关的测试计划文档。
+> SONiC console server / console line 相关测试计划与拓扑设计。Test plans for SONiC console server and console line management.
 
-## 测试计划列表
+## 文档列表 Documents
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| *(待补充)* | 📝 | 控制台连接和管理测试计划 |
+| 文档 | 类型 | 说明 |
+|------|------|------|
+| `console_test_hld.md` | HLD | Console line 管理的高层测试设计 |
+| `standalone_sonic_console_server_test_plan.md` | Test Plan | 独立 SONiC console server 部署与功能验证 |
 
-## 目录内容
+## 测试代码 Test Code
 
-当前目录包含控制台拓扑图：
-- `c0_lo_topo_phy.drawio.svg` - C0 本地控制台物理拓扑
-- `c0_topo.drawio.svg` - C0 控制台拓扑
-- `c0_topo_phy.drawio.svg` - C0 物理拓扑
-- `c0_topo_s1.drawio.svg` - C0 S1 拓扑
+- `tests/console/` — Console line 配置与操作用例
+- `tests/dut_console/` — DUT 串口控制台访问相关用例
 
-## 测试范围
+## 覆盖范围 Coverage
 
-### 1. 控制台连接
-- 串口控制台访问
-- SSH 到控制台
-- 带外控制台管理
+- Console line 配置（baud rate、flow control、access）
+- Console session 建立、复用与回收
+- 独立 console server 模式（standalone SONiC console server）下的端到端通路
 
-### 2. 控制台功能
-- 命令执行测试
-- 输出捕获
-- 超时处理
-- 多会话管理
+## 拓扑示意 Topology Diagrams
 
-### 3. 自动化控制台
-- 自动化脚本执行
-- 批量命令执行
-- 输出解析
+- `c0_topo.drawio.svg`、`c0_topo_phy.drawio.svg`、`c0_lo_topo_phy.drawio.svg`
+- `c0_topo_s1.drawio.svg`、`c0_topo_s2.drawio.svg`、`c0_topo_s3.drawio.svg`、`c0_topo_s4.drawio.svg`
 
-## 相关功能
+## 相关 Related
 
-- **Serial Console** - 串口控制台
-- **Out-of-Band Management** - 带外管理
-- **Automation** - 自动化测试
+- [`../bmc/README.md`](../bmc/README.md) — 带外管理
+- [SONiC Console HLD](https://github.com/sonic-net/SONiC/blob/master/doc/console/console_management.md)
 
-## 测试代码位置
+## 参考 References
 
-```
-tests/console/
-tests/dut_console/
-```
-
-## 参考文档
-
-- [SONiC Console Documentation](https://github.com/sonic-net/SONiC/wiki/Console)
-- [Console Test README](../../tests/console/README.md)
-
-## 待办事项
-
-- [ ] 创建详细的测试计划文档
-- [ ] 补充控制台自动化测试用例
-- [ ] 添加拓扑图说明文档
-
-## 状态说明
-
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+- [SONiC Wiki — Console Management](https://github.com/sonic-net/SONiC/wiki)

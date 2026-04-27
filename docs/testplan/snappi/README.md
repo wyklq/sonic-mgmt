@@ -1,78 +1,35 @@
-# Snappi 测试计划
+# Snappi 测试计划 Test Plans
 
-此目录包含 SONiC Snappi（流量生成和测试）相关的测试计划文档。
+> 基于 Snappi/Open Traffic Generator 的 SONiC 性能与协议测试计划。Test plans built on Snappi / Open Traffic Generator for SONiC performance and protocol testing.
 
-## 测试计划列表
+## 文档列表 Documents
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `switch-fcs-tests.md` | ✅ | 交换机 FCS（帧检验序列）测试 |
-| `switch-latency-tests.md` | ✅ | 交换机延迟测试 |
-| `switch-packet-drop-threshold-tests.md` | ✅ | 数据包丢弃阈值测试 |
-| `bgp_convergence_test.md` | ✅ | BGP 收敛测试 |
-| `HLD_RIB_IN_Convergence_Optimization_Performance.md` | ✅ | RIB IN 收敛优化性能测试 |
+| 文档 | 类型 | 说明 |
+|------|------|------|
+| `switch-fcs-tests.md` | Test Plan | 交换机 FCS 错误处理测试 |
+| `switch-latency-tests.md` | Test Plan | 交换机时延测试 |
+| `switch-packet-drop-threshold-tests.md` | Test Plan | 丢包阈值测试 |
+| `switch_capacity_test.md` | Test Plan | 交换机容量 / 性能测试 |
+| `bgp_convergence_test.md` | Test Plan | BGP 收敛性能测试 |
+| `HLD_RIB_IN_Convergence_Optimization_Performance.md` | HLD | RIB-In 收敛优化性能高层设计 |
+| `unified_snappi_bgp_outbound_ut2_support_proposal.md` | Proposal | 统一 Snappi BGP outbound UT2 支持提案 |
 
-## 测试范围
+## 测试代码 Test Code
 
-### 1. 流量生成测试
-- Snappi 流量生成
-- 多流场景
-- 流量模式配置
+- `tests/snappi_tests/` — 基于 Snappi 的 pytest 用例（注意目录名带 `_tests` 后缀）。
 
-### 2. 交换机性能测试
-- FCS 错误测试
-- 延迟测量
-- 吞吐量测试
-- 数据包丢弃阈值
+## 覆盖范围 Coverage
 
-### 3. BGP 收敛测试
-- BGP 收敛时间
-- 路由更新性能
-- 大规模路由测试
+- 交换机 FCS、时延、容量与丢包阈值
+- BGP 收敛性能与 RIB-In 优化
+- PFC / RoCE / ECN 等数据面性能场景（与 [`../pfc/README.md`](../pfc/README.md)、[`../ecn/README.md`](../ecn/README.md) 协同）
 
-### 4. RIB IN 优化
-- RIB 收敛优化
-- 性能基准测试
-- 大规模路由表
+## 相关 Related
 
-## 相关功能
+- [`../pfc/README.md`](../pfc/README.md)
+- [`../ecn/README.md`](../ecn/README.md)
+- [Snappi / Open Traffic Generator](https://github.com/open-traffic-generator/snappi)
 
-- **Ixia/Spirent** - 流量生成硬件
-- **BGP** - 边界网关协议 (`../BGP-*.md`)
-- **Performance** - 性能测试 (`../performance-meter-test-plan.md`)
-- **PFC** - 优先级流控 (`../pfc/`)
+## 参考 References
 
-## 测试代码位置
-
-```
-tests/snappi_tests/
-```
-
-## Snappi 概述
-
-Snappi 是用于高速网络测试的流量生成框架：
-- 支持多种流量模式
-- 精确的延迟和抖动测量
-- 大规模流量场景
-- 与 pytest 集成
-
-## 参考文档
-
-- [Snappi Documentation](https://snappi.readthedocs.io/)
-- [Snappi Tests README](../../tests/snappi_tests/README.md)
-- [FCS Tests](switch-fcs-tests.md)
-- [Latency Tests](switch-latency-tests.md)
-
-## 待办事项
-
-- [ ] 补充 Snappi 自动化测试计划
-- [ ] 添加更多性能基准测试
-- [ ] 完善流量模式文档
-
-## 状态说明
-
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+- [Open Traffic Generator API](https://github.com/open-traffic-generator)

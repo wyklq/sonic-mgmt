@@ -1,114 +1,91 @@
-# SONiC Test Plans
+# SONiC Test Plans / 测试计划索引
 
-此目录包含 SONiC 各种功能的测试计划文档。
+本目录汇集 SONiC 各功能 / 子系统的测试计划文档（HLD、Test Plan、Design）。
+This directory is the index of SONiC feature test plans.
 
-## 测试计划列表
+> 详细 plan 多位于子目录；小型 plan 直接以 `*-test-plan.md` / `*-testplan.md` 命名置于本目录根下。
+> 与之对应的测试代码位于仓库 `tests/` 下。
 
-### 网络协议测试
+## 子目录 Subdirectories
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `BGP-Aggregate-Address.md` | ✅ | BGP 聚合地址测试 |
-| `BGP-Allow-List.md` | ✅ | BGP 允许列表测试 |
-| `BGP-Authentication.md` | ✅ | BGP 认证测试 |
-| `BGP-BBR.md` | ✅ | BGP BBR 测试 |
-| `BGP-MP-test-plan.md` | ⚠️ TODO | BGP 多路径测试 |
-| `BGP-GR-helper-mode-test-plan.md` | ⚠️ TODO | BGP GR 辅助模式测试 |
-| `OSPF-test-plan.md` | ✅ | OSPF 测试 |
-| `MPLS-test-plan.md` | ✅ | MPLS 测试 |
-| `IPv4-Decapsulation-test.md` | ✅ | IPv4 解封装测试 |
+| 子目录 / Subdir | 主题 / Topic | 对应测试代码 / Test code |
+|-----------------|--------------|--------------------------|
+| [`bmc/`](bmc/README.md) | BMC、Liquid cooling 检测 | `tests/bmc/` |
+| [`console/`](console/README.md) | Console / serial 接入 | `tests/console/`、`tests/dut_console/` |
+| [`dash/`](dash/README.md) | DASH (DPU APIs for SONiC) | `tests/dash/` |
+| [`dhcp_relay/`](dhcp_relay/README.md) | DHCP relay (v4/v6) | `tests/dhcp_relay/` |
+| [`dns/`](dns/README.md) | Static DNS resolver | `tests/dns/` |
+| [`dual_tor/`](dual_tor/README.md) | Dual-ToR / Active-Active / mux | `tests/dualtor/`、`tests/dualtor_io/`、`tests/dualtor_mgmt/` |
+| [`ecn/`](ecn/README.md) | ECN marking / WRED 准确性 | 散布于 `tests/qos/`、`tests/snappi_tests/` |
+| [`ip-interface/`](ip-interface/README.md) | RIF / loopback / 接口语义 | `tests/ip/`、`tests/ipfwd/` |
+| [`mmu_threshold_probe/`](mmu_threshold_probe/README.md) | MMU 阈值探测设计 | 关联 `tests/qos/` |
+| [`pac/`](pac/README.md) | Port Access Control（提案阶段） | — |
+| [`pfc/`](pfc/README.md) | PFC 各模式 + RoCEv2 | `tests/pfc_asym/`、`tests/pfcwd/`、`tests/snappi_tests/` |
+| [`pfcwd/`](pfcwd/README.md) | PFC Watchdog | `tests/pfcwd/` |
+| [`smart-switch/`](smart-switch/README.md) | SmartSwitch / DPU | `tests/smartswitch/`（无连字符） |
+| [`snappi/`](snappi/README.md) | Snappi 高速流量测试 | `tests/snappi_tests/` |
+| [`srv6/`](srv6/README.md) | SRv6 数据面 / 控制面 | `tests/srv6/` |
+| [`stp/`](stp/README.md) | STP / PVST（提案阶段） | — |
+| [`syslog/`](syslog/README.md) | Syslog 协议 / 源 IP / 严重级 | `tests/syslog/` |
+| [`transceiver/`](transceiver/README.md) | 光模块 EEPROM / DOM / 系统 | `tests/transceiver/` |
 
-### 访问控制 (ACL)
+## 顶层 plan 速查 Top-level plans
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `ACL-test-plan.md` | 🚧 DRAFT | ACL 测试计划（草稿） |
-| `ACL-Outer-Vlan-test-plan.md` | ⚠️ TODO | 外层 VLAN ACL 测试 |
-| `CACL-function-test-plan.md` | ✅ | CACL 功能测试 |
+> 此处仅列出常用入口，**完整文件清单**请 `ls docs/testplan/` 查看。社区每月仍在新增 plan，下表会因此略微滞后。
 
-### 服务质量 (QoS)
+### 协议 / Protocols
+- `BGP-*.md` — BGP 全套（4-Byte AS、BBR、BGPMon、BGPSentinel、Allow-list、Suppress-FIB-Pending、TSA、Update-Timer 等）
+- `OSPF-test-plan.md`、`MPLS-test-plan.md`、`BFD-*.md`
+- `IPv4-Decapsulation-test.md`、`Next-hop-split-test-plan.md`、`W-ECMP-test-plan.md`、`Order-ECMP-test-plan.md`、`ECMP-Balance-test-plan.md`
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `QoS-configuration-in-Config-DB.md` | ✅ | QoS 配置测试 |
-| `PFC-test-plan.md` | ✅ | PFC 测试 |
-| `PFC_Congestion_Oversubscription_Test_Plan.md` | ✅ | PFC 拥塞测试 |
-| `ECN-test-plan.md` | ✅ | ECN 测试 |
+### QoS / Buffer / 拥塞
+- `PFC-test-plan.md`、`PFC_Congestion_Oversubscription_Test_Plan.md`、`PFC_Snappi_Additional_Testcases.md`
+- `QoS-configuration-in-Config-DB.-ECN-WRED-configuration-utility-test-plan.md`、`QoS-remapping-for-Tunnel-traffic-test-plan.md`
+- `Packet_Trimming_Testplan.md`、`MMU_Threshold_Probing_Design.md`（在子目录）
 
-### 安全
+### ACL / 安全
+- `ACL-test-plan.md`、`ACL-Outer-Vlan-test-plan.md`、`Extend_L3V6ACL_test_plan.md`、`CACL-function-test-plan.md`
+- `MACsec-test-plan.md`、`RADIUS-test-plan.md`、`SSH-ciphers-test-plan.md`、`SSH-stress-test-plan.md`、`SCP_copy-test-plan.md`、`HTTP_copy-test-plan.md`
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `MACsec-test-plan.md` | ⚠️ TODO | MACsec 测试 |
-| `RADIUS-test-plan.md` | ✅ | RADIUS 测试 |
-| `SSH-ciphers-test-plan.md` | ✅ | SSH 加密测试 |
+### 平台 / 监控
+- `CRM-test-plan.md`、`SNMP-interfaces-test-plan.md`、`SNMP-v2mib-test-plan.md`、`SNMP-memory-test-plan.md`
+- `LLDP-syncd-test-plan.md`、`PMON-Chassis-Enhancements-test-plan.md`、`PMON-Services-Daemons-test-plan.md`
+- `FWUtil-test-plan.md`、`FEC_test.md`、`sensors-test-plan.md`、`Container-Upgrade-test-plan.md`、`Upgrade_gNOI-test-plan.md`
 
-### 其他
+### 拓扑 / 大规模
+- `Chassis-everflow-test-plan.md`、`Chassis-fabric-test-plan.md`、`chassis-lag-test-plan.md`、`Distributed-VoQ-Arch-test-plan.md`
+- `BGP-Suppress-FIB-Pending-test-plan-T2-Chassis.md`、`BGP-T2-Anchor-prefix-test-plan.md`
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `Everflow-test-plan.md` | ⚠️ TODO | Everflow 测试 |
-| `CRM-test-plan.md` | ⚠️ TODO | CRM 测试 |
-| `SNMP-interfaces-test-plan.md` | ✅ | SNMP 接口测试 |
-| `Telemetry-test-plan.md` | ✅ | 遥测测试 |
-| `Container-Upgrade-test-plan.md` | ✅ | 容器升级测试 |
-| `DHCP-Server-test-plan.md` | ✅ | DHCP 服务器测试 |
+### 其它
+- `DHCP-Server-test-plan.md`、`IPv4-Port-Based-DHCP-Server-test-plan.md`
+- `Everflow-test-plan.md`、`SAG-test-plan.md`、`WoL-test-plan.md`、`HFT-test-plan.md`
+- `gnmi-uds-transport-design.md`、`gnoi_client_library_design.md`
+- `link-local-test-plan.md`、`filterleaf-testplan.md`、`reboot-blocking_mode-test-plan.md`
+- `Convergence measurement in data center networks.md`、`Downtime Convergence for various reboot scenarios.md`
+- `BGP Convergence Testplan for single DUT.md`、`BGP-Convergence-Testplan-for-Benchmark-Performance.md`
 
-## 子目录测试计划
+## 测试计划写作模板 Plan Template
 
-以下子目录包含特定功能的测试计划：
+新增详细 plan 时建议遵循下列骨架（参考 [`pfc/PFC_ASYMMETRIC_TEST_PLAN.md`](pfc/PFC_ASYMMETRIC_TEST_PLAN.md) 作为标杆）：
 
-| 目录 | 描述 | 状态 |
-|------|------|------|
-| `ACL/` | ACL 相关测试 | 🚧 待完善 |
-| `bmc/` | BMC 测试 | ✅ 已完成 |
-| `console/` | 控制台测试 | ✅ 已完成 |
-| `dash/` | DASH 测试 | ✅ 已完成 |
-| `dhcp_relay/` | DHCP 中继测试 | ✅ 已完成 |
-| `dns/` | DNS 测试 | ✅ 已完成 |
-| `dual_tor/` | 双 ToR 测试 | ✅ 已完成 |
-| `ecn/` | ECN 测试 | ✅ 已完成 |
-| `images/` | 图片资源 | 📝 待创建 |
-| `ip-interface/` | IP 接口测试 | ✅ 已完成 |
-| `mmu_threshold_probe/` | MMU 阈值探测测试 | ✅ 已完成 |
-| `pac/` | 端口访问控制测试 | ✅ 已完成 |
-| `pfc/` | PFC 测试 | ✅ 已完成 |
-| `pfcwd/` | PFC Watchdog 测试 | ✅ 已完成 |
-| `smart-switch/` | 智能交换机测试 | ✅ 已完成 |
-| `snappi/` | Snappi 流量测试 | ✅ 已完成 |
-| `srv6/` | SRv6 测试 | ✅ 已完成 |
-| `stp/` | STP 测试 | ✅ 已完成 |
-| `syslog/` | Syslog 测试 | ✅ 已完成 |
-| `transceiver/` | 收发器测试 | ✅ 已完成 |
+1. **Revision** — 版本表（Rev / Date / Author / Change）
+2. **Scope** — 显式列出范围**与不在范围内**
+3. **Definitions / Abbreviations**
+4. **Background** — 协议/标准简述 + SONiC 实现层映射（CLI / CONFIG_DB / orch / SAI / STATE_DB）
+5. **Testbed** — 拓扑、硬件 / fixture 要求
+6. **Setup configuration** — 可复制粘贴的 CLI / CONFIG_DB / 校验命令
+7. **Test methodology** — 流量、判定准则、teardown
+8. **Test cases** — 每个 case 含 *Objective / Configuration / Steps / Pass criteria*
+9. **Test case ↔ implementation mapping** — 与 `tests/` 下 pytest 函数一一对应
+10. **Out of scope** + **Open items**
+11. **References**
 
-## 状态说明
+子目录 `README.md` 应保持轻量：仅列文档清单、对应 `tests/` 路径、覆盖范围概述与相关链接。
 
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 草稿/开发中 |
-| ⚠️ | 待完善（有 TODO 标记） |
-| 📝 | 待创建 |
+## 参考 References
 
-## 测试计划模板
-
-每个测试计划应包含以下部分：
-
-1. **Overview** - 概述
-2. **Scope** - 测试范围
-3. **Setup configuration** - 配置设置
-4. **Test Cases** - 测试用例
-5. **TODO** - 待完成事项（如有）
-
-## 参考文档
-
-- [Testbed Documentation](../testbed/README.md)
-- [Writing Tests Guide](../tests/)
-- [API Wiki](../api_wiki/README.md)
-
-## 待办事项
-
-- [ ] 完善标记为 DRAFT 的测试计划
-- [ ] 完成包含 TODO 的测试计划
-- [ ] 为子目录创建缺失的测试计划文档
-- [ ] 添加更多测试计划的链接和描述
+- [`../README.md`](../README.md) — `docs/` 总览
+- [`../testbed/`](../testbed/) — testbed 部署
+- [`../../tests/README.md`](../../tests/README.md) — 测试代码与运行
+- [`../api_wiki/`](../api_wiki/) — localhost/DUT/PTF API
+- [SONiC wiki](https://github.com/sonic-net/SONiC/wiki) — 上游设计文档

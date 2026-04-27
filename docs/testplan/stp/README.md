@@ -1,49 +1,25 @@
-# STP (Spanning Tree Protocol) 测试计划
+# STP（生成树协议） / Spanning Tree Protocol 测试计划 Test Plans
 
-此目录包含 SONiC STP 和 PVST 相关的测试计划文档。
+> SONiC PVST 测试计划提案。Proposal-stage test plan for PVST in SONiC.
 
-## 测试计划列表
+## 文档列表 Documents
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `PVST-testplan.md` | ✅ | PVST (Per-VLAN Spanning Tree) 测试计划 |
+| 文档 | 类型 | 说明 |
+|------|------|------|
+| `PVST-testplan.md` | Proposal / Test Plan | PVST 功能与场景测试计划 |
 
-## 测试范围
+## 测试代码 Test Code
 
-### PVST (Per-VLAN Spanning Tree)
-- PVST 协议功能测试
-- 多 VLAN 生成树协议测试
-- 拓扑变化处理
-- BPDU 报文处理
-- 端口状态转换测试
+At the time of writing, no dedicated `tests/stp/` directory exists. 该 plan 当前为 proposal 阶段，仓库尚未提供对应自动化测试代码。
 
-## 相关功能
+## 覆盖范围 Coverage
 
-- **STP/RSTP/MSTP** - 标准生成树协议
-- **PVST+** - Cisco 兼容的生成树协议
-- **VLAN** - 虚拟局域网
+- PVST 拓扑收敛、root election、port role 等设计场景（详见 `PVST-testplan.md`）
 
-## 测试代码位置
+## 相关 Related
 
-```
-tests/stp/
-```
+- IEEE 802.1D / 802.1w / 802.1s
 
-## 参考文档
+## 参考 References
 
-- [SONiC STP Documentation](https://github.com/sonic-net/SONiC/wiki/STP)
-- [PVST Test Plan](PVST-testplan.md)
-
-## 待办事项
-
-- [ ] 补充 STP/RSTP 基础测试计划
-- [ ] 添加 MSTP (Multiple Spanning Tree Protocol) 测试计划
-- [ ] 完善 PVST 测试用例覆盖
-
-## 状态说明
-
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+- Cisco Per-VLAN Spanning Tree (PVST/PVST+) 文档

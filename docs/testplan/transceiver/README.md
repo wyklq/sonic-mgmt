@@ -1,51 +1,32 @@
-# Transceiver (光模块) 测试计划
+# Transceiver（光模块） 测试计划 Test Plans
 
-此目录包含 SONiC 光模块（Transceiver）相关的测试计划文档。
+> SONiC 光模块（transceiver）功能、DOM、EEPROM 与系统级测试计划。Test plans for SONiC transceiver functionality, DOM, EEPROM and system-level scenarios.
 
-## 测试计划列表
+## 文档列表 Documents
 
-| 测试计划 | 状态 | 描述 |
-|---------|------|------|
-| `test_plan.md` | ✅ | 光模块主测试计划 |
-| `dom_test_plan.md` | 🆕 新增 | Digital Optical Monitoring (DOM) 测试计划 |
-| `system_test_plan.md` | 🆕 新增 | 系统级光模块测试计划 |
-| `eeprom_test_plan.md` | ✅ | EEPROM 测试计划 |
+| 文档 | 类型 | 说明 |
+|------|------|------|
+| `test_plan.md` | Test Plan | Transceiver 总体测试计划 |
+| `dom_test_plan.md` | Test Plan | DOM（Digital Optical Monitoring）测试 |
+| `eeprom_test_plan.md` | Test Plan | EEPROM 读取与解析测试 |
+| `system_test_plan.md` | Test Plan | 系统级 transceiver 端到端测试 |
 
-## 测试范围
+## 测试代码 Test Code
 
-### 1. DOM (Digital Optical Monitoring)
-- 光功率监控（发送/接收）
-- 温度监控
-- 电压监控
-- 告警阈值测试
+- `tests/transceiver/` — Transceiver 相关 pytest 用例。
 
-### 2. EEPROM 测试
-- 读取和验证 SFP/SFP+/QSFP EEPROM 数据
-- 厂商信息验证
-- 序列号、日期码验证
+## 覆盖范围 Coverage
 
-### 3. 系统级测试
-- 光模块热插拔
-- 链路状态管理
-- 多速率支持
-- 兼容性测试
+- 模块插拔检测、CMIS / SFF-8636 / SFF-8472 等协议解析
+- DOM 监控量（温度、电压、Tx/Rx power 等）
+- EEPROM 字段一致性
+- 系统级 transceiver 行为（reboot、warm reload、模块切换）
 
-## 参考文档
+## 相关 Related
 
-- [SONiC Transceiver Documentation](https://github.com/sonic-net/SONiC/wiki/Transceiver)
-- [测试代码目录](../../../tests/transceiver/)
+- [SONiC xcvrd HLD](https://github.com/sonic-net/SONiC/tree/master/doc/sfp-xcvrd)
 
-## 待办事项
+## 参考 References
 
-- [ ] 完善 DOM 测试计划的测试用例
-- [ ] 补充系统测试计划的配置要求
-- [ ] 添加更多光模块型号的测试覆盖
-
-## 状态说明
-
-| 标记 | 含义 |
-|------|------|
-| ✅ | 已完成 |
-| 🆕 | 最近新增 |
-| 🚧 | 开发中 |
-| 📝 | 待创建 |
+- CMIS（Common Management Interface Specification）
+- SFF-8636 / SFF-8472

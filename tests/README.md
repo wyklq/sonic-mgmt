@@ -1,87 +1,89 @@
-# Tests Directory
+# SONiC `tests/` Directory / 测试目录
 
-此目录包含 SONiC 的 pytest 和 pytest-ansible 测试基础设施代码和测试脚本。
+本目录承载 SONiC 基于 **pytest + pytest-ansible** 的测试基础设施与测试脚本。
+This directory hosts the SONiC pytest-based test infrastructure and test scripts.
 
-## 目录结构
+## 目录结构 Structure
 
-| 目录 | 描述 |
-|------|------|
-| `common/` | 通用测试工具和 pytest fixtures |
-| `common2/` | 第二代通用测试工具（较新） |
-| `bgp/` | BGP 相关测试 |
-| `acl/` | ACL（访问控制列表）测试 |
-| `snappi_tests/` | 基于 Snappi 的流量测试 |
-| `wan/` | WAN（广域网）相关测试 |
-| `dash/` | DASH 测试 |
-| `gnmi/` | gNMI 接口测试 |
-| `restapi/` | REST API 测试 |
-| `telemetry/` | 遥测测试 |
-| `platform_tests/` | 平台特定测试 |
-| `qos/` | QoS（服务质量）测试 |
-| `snmp/` | SNMP 测试 |
-| `security/` | 安全相关测试 |
-| ... | 更多测试目录（共 120+ 个） |
+`tests/` 下当前共约 **150 个**子目录，按特性 / 子系统组织。下表列出最常用的入口；
+完整列表请直接 `ls tests/`。
 
-## 运行测试
+| 目录 / Directory | 说明 / Description |
+|------------------|--------------------|
+| `common/` | 跨测试共享的工具、helper、fixture 与设备封装；几乎所有用例都会 import |
+| `common2/` | 第二代通用工具（独立打包，含 `pytest.ini` 与 `setup_environment.sh`） |
+| `bgp/` | BGP 协议族用例 |
+| `acl/` | ACL（访问控制列表）用例 |
+| `dualtor/`、`dualtor_io/`、`dualtor_mgmt/` | 双 ToR 拓扑用例（注意：目录名**无连字符**） |
+| `pfc_asym/`、`pfcwd/` | PFC 非对称模式 与 PFC Watchdog |
+| `qos/` | QoS / DSCP / WRED / ECN 集成测试入口 |
+| `snappi_tests/` | 基于 Snappi (Open Traffic Generator) 的高速流量测试 |
+| `dash/` | DASH（Disaggregated APIs for SONiC Hosts）用例 |
+| `smartswitch/` | SmartSwitch / DPU 用例 |
+| `platform_tests/` | 平台 / 硬件相关用例 |
+| `console/`、`dut_console/` | 控制台 / serial 测试 |
+| `gnmi/`、`telemetry/`、`restapi/` | 北向接口 / Streaming Telemetry |
+| `srv6/`、`bmc/`、`syslog/`、`dns/`、`dhcp_relay/`、`transceiver/` | 同名特性专属测试 |
 
-### 使用 pytest 运行测试
+测试计划文档位于 [`../docs/testplan/`](../docs/testplan/README.md)，与上述目录形成对应关系。
 
-```bash
-# 运行单个测试文件
-pytest tests/bgp/test_bgp_aggregate_address.py
+## 关键文件 Key Files
 
-# 运行特定测试目录
-pytest tests/bgp/
+| 文件 / File | 说明 / Description |
+|-------------|--------------------|
+| `conftest.py` | 顶层 pytest 配置 + fixtures，定义 `duthosts`、`tbinfo`、`ptfhost`、`enum_*` 等核心 fixture |
+| `pytest.ini` | pytest 配置（`markers`、插件、addopts） |
+| `run_tests.sh` | 推荐的一键运行入口；包装常用 testbed/inventory 参数 |
+| `ptf_runner.py` | 远程拉起 PTF 中 saitests / ptftests 的运行器 |
 
-# 使用 marker 过滤测试
-pytest tests/ -m "bgp"
+## 运行测试 Running Tests
 
-# 查看可用 marker
-pytest tests/ --markers
-```
-
-### 使用 run_tests.sh 脚本
+> 假设你已经按 `docs/testbed/` 完成 testbed 部署。
 
 ```bash
-./tests/run_tests.sh -h
+# 1) 单测（VS testbed 示例）
+cd tests
+pytest bgp/test_bgp_fact.py \
+    --inventory ../ansible/veos_vtb \
+    --host-pattern all \
+    --testbed_file ../ansible/vtestbed.yaml \
+    --testbed vms-kvm-t0 \
+    --skip_sanity --disable_loganalyzer \
+    -rav
+
+# 2) 按 marker 过滤
+pytest -m "topology('t0')" bgp/
+
+# 3) 用包装脚本
+./run_tests.sh -h
 ```
 
-### 使用 testbed-cli.sh（需要配置 testbed）
+更多参数与 marker 见 `pytest.ini` 与 `tests/common/plugins/`。
 
-```bash
-./ansible/testbed-cli.sh -t testbed.yaml -m inventory run test <testname>
+## 编写测试 Writing Tests
+
+```python
+import pytest
+from tests.common.helpers.assertions import pytest_assert
+
+@pytest.mark.topology('t0')
+def test_my_feature(duthosts, rand_one_dut_hostname, tbinfo):
+    """Test that my feature works as expected."""
+    duthost = duthosts[rand_one_dut_hostname]
+    duthost.shell("config my_feature enable")
+    rows = duthost.show_and_parse("show my_feature status")
+    pytest_assert(rows[0]["status"] == "enabled", "feature should be enabled")
 ```
 
-## 测试框架说明
+要点 Conventions：
+- 文件命名 `test_*.py`，函数命名 `test_*`，类命名 `Test*`
+- 使用 `@pytest.mark.topology(...)` 标注适配拓扑
+- 用 `tests/common/` 中的 helper，**不要**自行 SSH / `subprocess` DUT
+- 修改了 DUT 状态务必在 fixture teardown 中复原
 
-- **pytest**: 主要测试框架
-- **pytest-ansible**: 连接 pytest 和 ansible 的插件
-- **Ansible**: 仍在底层使用，用于与 testbed 中的设备交互
+## 参考 References
 
-## 重要文件
-
-| 文件 | 描述 |
-|------|------|
-| `conftest.py` | pytest 配置和 fixtures（约 170KB，核心配置） |
-| `pytest.ini` | pytest 配置文件 |
-| `run_tests.sh` | 测试运行脚本 |
-| `ptf_runner.py` | PTF（Packet Test Framework）运行器 |
-
-## 测试编写指南
-
-参考文档：
-- [Testbed Documentation](../docs/testbed/README.md)
-- [API Wiki](../docs/api_wiki/README.md)
-- [Writing Tests Guide](../docs/tests/)
-
-## 注意事项
-
-- 测试需要正确配置的 testbed 才能运行
-- 部分测试需要特定的拓扑（如 t0, t1, t2, ptf 等）
-- 虚拟 testbed（VS Setup）可用于不需要物理设备的控制平面测试
-
-## 待完善
-
-- [ ] 补充各子目录的 README.md
-- [ ] 添加更多测试示例
-- [ ] 完善测试编写指南链接
+- [`../docs/testbed/`](../docs/testbed/) — testbed 准备
+- [`../docs/testplan/README.md`](../docs/testplan/README.md) — 测试计划索引
+- [`../api_wiki/`](../api_wiki/) — localhost / DUT / PTF 通信 API
+- [`common2/README.md`](common2/README.md) — 第二代工具集

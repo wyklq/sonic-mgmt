@@ -33,7 +33,7 @@
 | Rev | Date         | Author       | Change Description                                                                 |
 |:---:|:-------------|:-------------|:-----------------------------------------------------------------------------------|
 | 0.1 | 2026-04-24   | Y. Wu        | Initial skeleton (commit 6fd34d7).                                                  |
-| 0.2 | 2026-04-27   | Y. Wu        | Aligned with `tests/pfc_asym/test_pfc_asym.py`; added topology, CONFIG_DB schema, per-case steps, pass/fail criteria, traceability matrix. Removed unverified `RoCE` cross-cutting claims (split to a separate plan). |
+| 0.2 | 2026-04-27   | Y. Wu        | Aligned with `tests/pfc_asym/test_pfc_asym.py`; added topology, CONFIG_DB schema, per-case steps, pass/fail criteria, traceability matrix. Cross-cutting RoCEv2 content moved to a dedicated [`RoCE_v2_TEST_PLAN.md`](RoCE_v2_TEST_PLAN.md). |
 
 ## Scope
 
@@ -283,7 +283,7 @@ When new pytest functions are added under `tests/pfc_asym/`, this table **must**
 
 The following items were initially folded into earlier drafts of this plan; they are tracked separately because they exercise distinct code paths and require different testbeds:
 
-- **RoCEv2 end-to-end functional / performance**: requires CX-series RNICs and `perftest` harness; no SONiC-side asymmetric-PFC code path is exclusive to RoCEv2. Move to a dedicated `RoCE_v2_TEST_PLAN.md` (currently a skeleton — pending rewrite).
+- **RoCEv2 end-to-end functional / performance**: requires CX-series RNICs and `perftest` harness; no SONiC-side asymmetric-PFC code path is exclusive to RoCEv2. Tracked in the dedicated [`RoCE_v2_TEST_PLAN.md`](RoCE_v2_TEST_PLAN.md).
 - **PFC Watchdog interaction**: covered by `docs/testplan/pfcwd/`.
 - **ECN / DCQCN co-existence**: covered by `docs/testplan/ecn/` and `docs/testplan/PFC_Congestion_Oversubscription_Test_Plan.md`.
 - **Snappi / Keysight large-scale traffic**: covered by `docs/testplan/PFC_Snappi_Additional_Testcases.md`.

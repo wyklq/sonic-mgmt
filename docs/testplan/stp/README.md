@@ -1,16 +1,18 @@
 # STP（生成树协议） / Spanning Tree Protocol 测试计划 Test Plans
 
-> SONiC PVST 测试计划提案。Proposal-stage test plan for PVST in SONiC.
+> SONiC PVST 测试计划与对应实现。PVST test plan and corresponding implementation in SONiC.
 
 ## 文档列表 Documents
 
 | 文档 | 类型 | 说明 |
 |------|------|------|
-| `PVST-testplan.md` | Proposal / Test Plan | PVST 功能与场景测试计划 |
+| `PVST-testplan.md` | Test Plan | PVST 功能与场景测试计划 |
 
 ## 测试代码 Test Code
 
-At the time of writing, no dedicated `tests/stp/` directory exists. 该 plan 当前为 proposal 阶段，仓库尚未提供对应自动化测试代码。
+- `tests/pvst/` — PVST 自动化测试（`test_pvst.py` + `pvst_utils.py`）
+
+> 注意：仓库中没有 `tests/stp/` 目录；PVST 用例位于上面的 `tests/pvst/`。
 
 ## 覆盖范围 Coverage
 

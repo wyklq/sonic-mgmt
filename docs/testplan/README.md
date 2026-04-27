@@ -11,17 +11,25 @@ This directory is the index of SONiC feature test plans.
 | 子目录 / Subdir | 主题 / Topic | 对应测试代码 / Test code |
 |-----------------|--------------|--------------------------|
 | [`bmc/`](bmc/README.md) | BMC、Liquid cooling 检测 | `tests/bmc/` |
+| [`configlet/`](configlet/README.md) | Configlet / generic-patch AddRack | `tests/configlet/` |
 | [`console/`](console/README.md) | Console / serial 接入 | `tests/console/`、`tests/dut_console/` |
+| [`container_hardening/`](container_hardening/README.md) | 容器特权 / 块设备暴露面加固 | `tests/container_hardening/` |
+| [`cpu_shaper/`](cpu_shaper/README.md) | Broadcom CPU 队列 PPS shaper | `tests/cpu_shaper/` |
 | [`dash/`](dash/README.md) | DASH (DPU APIs for SONiC) | `tests/dash/` |
 | [`dhcp_relay/`](dhcp_relay/README.md) | DHCP relay (v4/v6) | `tests/dhcp_relay/` |
 | [`dns/`](dns/README.md) | Static DNS resolver | `tests/dns/` |
 | [`dual_tor/`](dual_tor/README.md) | Dual-ToR / Active-Active / mux | `tests/dualtor/`、`tests/dualtor_io/`、`tests/dualtor_mgmt/` |
 | [`ecn/`](ecn/README.md) | ECN marking / WRED 准确性 | 散布于 `tests/qos/`、`tests/snappi_tests/` |
 | [`ip-interface/`](ip-interface/README.md) | RIF / loopback / 接口语义 | `tests/ip/`、`tests/ipfwd/` |
+| [`log_fidelity/`](log_fidelity/README.md) | 关键 CLI 操作的 syslog 日志保真 | `tests/log_fidelity/` |
 | [`mmu_threshold_probe/`](mmu_threshold_probe/README.md) | MMU 阈值探测设计 | 关联 `tests/qos/` |
 | [`pac/`](pac/README.md) | Port Access Control（提案阶段） | — |
 | [`pfc/`](pfc/README.md) | PFC 各模式 + RoCEv2 | `tests/pfc_asym/`、`tests/pfcwd/`、`tests/snappi_tests/` |
 | [`pfcwd/`](pfcwd/README.md) | PFC Watchdog | `tests/pfcwd/` |
+| [`read_mac/`](read_mac/README.md) | 镜像重装回路 MAC / MTU 保真 | `tests/read_mac/` |
+| [`reset_factory/`](reset_factory/README.md) | `reset-factory` CLI 各模式 | `tests/reset_factory/` |
+| [`restapi/`](restapi/README.md) | RESTAPI（mTLS HTTPS, 端口 8081） | `tests/restapi/` |
+| [`sflow/`](sflow/README.md) | sFlow 采样 / 计数器轮询 / reboot 持久性 | `tests/sflow/` |
 | [`smart-switch/`](smart-switch/README.md) | SmartSwitch / DPU | `tests/smartswitch/`（无连字符） |
 | [`snappi/`](snappi/README.md) | Snappi 高速流量测试 | `tests/snappi_tests/` |
 | [`srv6/`](srv6/README.md) | SRv6 数据面 / 控制面 | `tests/srv6/` |
